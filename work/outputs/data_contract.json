@@ -1,0 +1,230 @@
+{
+  "version": "1.1",
+  "card": "ML-04",
+  "lane": "Freestyle - AI Referral and GEO Opportunity Scoring",
+  "analysis_grain": "one content item observed at a single decision date T",
+  "source_grain": {
+    "warehouse_fact": "report_date x client_hash_id x content_hash_id (probed, 0 duplicates)",
+    "starter_csv": "content_id (probed, 0 duplicates)"
+  },
+  "windows": {
+    "decision_date": "2026-03-31",
+    "feature_window": [
+      "2026-01-01",
+      "2026-03-31"
+    ],
+    "label_window": [
+      "2026-04-01",
+      "2026-04-30"
+    ],
+    "sealed_test_month": "2026-06",
+    "iteration_partition": "month=2026-03"
+  },
+  "fields": {
+    "starter": {
+      "context": [
+        "content_id",
+        "client_id"
+      ],
+      "label": [
+        "trend_direction",
+        "trend_pct"
+      ],
+      "excluded": [
+        "provider_used",
+        "model_used"
+      ],
+      "feature": [
+        "search_volume",
+        "competition",
+        "competition_level",
+        "cpc",
+        "content_type",
+        "main_intent",
+        "word_count",
+        "char_count",
+        "impressions_90d",
+        "clicks_90d",
+        "pageviews_90d",
+        "sessions_90d",
+        "users_90d",
+        "engaged_sessions_90d",
+        "ai_sessions_90d",
+        "scroll_events_90d",
+        "days_with_impressions",
+        "days_with_sessions",
+        "impressions_last_30d",
+        "clicks_last_30d",
+        "sessions_last_30d",
+        "impressions_prev_30d",
+        "clicks_prev_30d",
+        "sessions_prev_30d",
+        "content_age_days",
+        "age_tier",
+        "age_tier_order",
+        "days_since_last_update",
+        "freshness_tier",
+        "word_count_tier",
+        "char_count_tier",
+        "ctr",
+        "avg_position",
+        "engagement_rate",
+        "scroll_rate",
+        "ai_traffic_pct",
+        "impression_tier",
+        "position_tier"
+      ]
+    },
+    "warehouse": {
+      "dim_clients": {
+        "context": [
+          "client_hash_id",
+          "is_active",
+          "has_gsc_access",
+          "has_ga4_access",
+          "access_profile",
+          "client_created_date",
+          "client_updated_date",
+          "gsc_data_start",
+          "ga4_data_start"
+        ],
+        "feature": [],
+        "label": [],
+        "excluded": []
+      },
+      "dim_content": {
+        "context": [
+          "client_hash_id",
+          "content_hash_id",
+          "keyword_hash_id",
+          "url_hash_id",
+          "is_published",
+          "is_deleted"
+        ],
+        "feature": [
+          "keyword_char_count",
+          "keyword_token_count",
+          "url_char_count",
+          "content_type",
+          "search_volume",
+          "competition",
+          "competition_level",
+          "cpc",
+          "main_intent",
+          "backlinks",
+          "category_count",
+          "char_count",
+          "word_count",
+          "content_created_date",
+          "keyword_created_date"
+        ],
+        "label": [],
+        "excluded": [
+          "provider_used",
+          "model_used",
+          "last_optimized_date",
+          "optimization_eligible_date",
+          "content_updated_date"
+        ]
+      },
+      "fact_content_daily_performance": {
+        "context": [
+          "report_date",
+          "client_hash_id",
+          "content_hash_id",
+          "month",
+          "client_has_gsc",
+          "client_has_ga4",
+          "gsc_data_available",
+          "ga4_data_available"
+        ],
+        "feature": [
+          "gsc_impressions",
+          "gsc_clicks",
+          "gsc_sum_position",
+          "gsc_avg_position",
+          "ga4_pageviews",
+          "ga4_sessions",
+          "ga4_users",
+          "ga4_engaged_sessions",
+          "ga4_total_engagement_sec",
+          "sessions_organic",
+          "sessions_direct",
+          "sessions_referral",
+          "sessions_social",
+          "sessions_paid",
+          "scroll_events",
+          "sessions_ai",
+          "ai_chatgpt",
+          "ai_perplexity",
+          "ai_gemini",
+          "ai_copilot",
+          "ai_claude",
+          "ai_meta",
+          "ai_other"
+        ],
+        "label": [],
+        "excluded": []
+      }
+    },
+    "window_dependent": [
+      "ga4_sessions",
+      "sessions_ai",
+      "ai_chatgpt",
+      "ai_perplexity",
+      "ai_gemini",
+      "ai_copilot",
+      "ai_claude",
+      "ai_meta",
+      "ai_other"
+    ]
+  },
+  "leakage_flagged": [
+    "trend_pct"
+  ],
+  "labels": {
+    "primary": "ga4_sessions summed over W_l below 0.80 x W_f daily average, ga4_data_available rows only",
+    "secondary": "AI visibility gap: demand in W_f at least 500 impressions and sessions_ai == 0",
+    "starter_proxy": "is_declining_label = trend_direction == 'down' (current-window bucket, not a future outcome)"
+  },
+  "rules": {
+    "split": "group by client_hash_id; never a random row split",
+    "eligible_clients": "access_profile in ('gsc_and_ga4','ga4_only') for AI work",
+    "missing_values": "add has_<col> indicator then impute; never a bare fillna(0)",
+    "sentinels": "avg_position == 0 means no data; exclude before averaging",
+    "rates": "ctr, engagement_rate, scroll_rate, ai_traffic_pct are x100 percentages",
+    "query_table": "ANY_VALUE() per-content context columns; never SUM()",
+    "panel": "filter on ga4_data_available; per-client windows, not one calendar",
+    "constant_columns": "ai_meta and ai_other are all zero in month=2026-03; check before modelling",
+    "min_impressions": 500,
+    "metric": "Precision@K, always reported beside the positive rate"
+  },
+  "measured": {
+    "partition": "month=2026-03",
+    "daily_rows": 9841378,
+    "ga4_available_rows": 413966,
+    "ai_rows": 5534,
+    "ai_content_items": 3795,
+    "content_items": 331437,
+    "ai_clients": 35,
+    "ai_sessions": 8911,
+    "ga4_sessions": 1299808,
+    "engines": {
+      "chatgpt": 5155,
+      "gemini": 2527,
+      "perplexity": 970,
+      "copilot": 144,
+      "claude": 118,
+      "meta": 0,
+      "other": 0
+    },
+    "access_profile": {
+      "gsc_and_ga4": 53,
+      "no_search_or_analytics_access": 26,
+      "gsc_only": 14,
+      "source_only_missing_client_dimension": 10,
+      "ga4_only": 1
+    },
+    "measured_on": "2026-08-19"
+  }
+}
