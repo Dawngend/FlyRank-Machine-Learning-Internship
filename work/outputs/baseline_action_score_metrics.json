@@ -1,0 +1,69 @@
+{
+  "card": "ML-07",
+  "contract_version": "1.1",
+  "rows_scored": 30000,
+  "base_rate_declining": 0.5420666666666667,
+  "score_distribution": {
+    "0": 13644,
+    "10": 2848,
+    "15": 4510,
+    "20": 3113,
+    "25": 1889,
+    "30": 570,
+    "35": 2150,
+    "40": 13,
+    "45": 1245,
+    "50": 2,
+    "55": 8,
+    "60": 5,
+    "65": 3
+  },
+  "precision_at_k": {
+    "20": 0.65,
+    "50": 0.68,
+    "100": 0.62,
+    "500": 0.548,
+    "1000": 0.539
+  },
+  "lift_at_k": {
+    "20": 1.1991145000614931,
+    "50": 1.2544582462181775,
+    "100": 1.1437707539048088,
+    "500": 1.0109457631287664,
+    "1000": 0.9943426392817611
+  },
+  "reason_code_counts": {
+    "stale_visible_page": 17,
+    "thin_visible_page": 82,
+    "page_one_decay_risk": 7076,
+    "low_ctr_visible_page": 9759,
+    "low_engagement_visible_page": 6508
+  },
+  "precision_by_reason": {
+    "stale_visible_page": 0.5294117647058824,
+    "thin_visible_page": 0.5365853658536586,
+    "page_one_decay_risk": 0.5380158281514981,
+    "low_ctr_visible_page": 0.5410390408853366,
+    "low_engagement_visible_page": 0.53779963122311
+  },
+  "action_counts": {
+    "monitor_only": 13644,
+    "refresh_and_review_ctr": 9731,
+    "refresh_to_defend_position": 3678,
+    "review_engagement": 2848,
+    "expand_and_refresh": 82,
+    "refresh_content": 17
+  },
+  "leakage_guard": {
+    "label_fields_dropped_before_scoring": [
+      "trend_direction",
+      "trend_pct",
+      "is_declining_label"
+    ],
+    "contract_excluded_fields_dropped": [
+      "provider_used",
+      "model_used"
+    ],
+    "columns_visible_to_rule": 47
+  }
+}
