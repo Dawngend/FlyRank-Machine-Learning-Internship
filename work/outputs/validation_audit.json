@@ -1,0 +1,1412 @@
+{
+  "card": "ML-09",
+  "seed": 42,
+  "base_rate": 0.5420666666666667,
+  "rows": 30000,
+  "n_clients": 32,
+  "label_reconstruction": {
+    "documented_rule": "paper p.5: down when impressions fall >10% vs prev 30d",
+    "recovered_rule": "down when (imp_last_30d - imp_prev_30d) / imp_prev_30d < -20%",
+    "documentation_mismatch": true,
+    "observed_bands_on_recomputed_change": {
+      "down": {
+        "n": 16262,
+        "min_pct": -100.0,
+        "max_pct": -20.021
+      },
+      "stable": {
+        "n": 5962,
+        "min_pct": -20.0,
+        "max_pct": 20.0
+      },
+      "up": {
+        "n": 4388,
+        "min_pct": 20.025,
+        "max_pct": 44900.0
+      }
+    },
+    "rows_total": 30000,
+    "rows_with_nonzero_prev_30d": 26612,
+    "rows_with_zero_prev_30d": 3388,
+    "zero_prev_30d_are_new_or_flat_and_never_labelled_down": true,
+    "agreement_by_threshold": {
+      "-10%": 0.933433,
+      "-20%": 1.0
+    },
+    "exact_agreement_recovered_rule": 1.0,
+    "rows_reconstructed_exactly": 30000,
+    "roc_auc_of_impression_ratio_alone": 1.0,
+    "roc_auc_of_each_column_alone": {
+      "impressions_last_30d": 0.4857,
+      "impressions_prev_30d": 0.6214
+    },
+    "verdict": "leak_confirmed_as_interaction",
+    "why_a_single_feature_scan_misses_it": "each column alone separates the label barely better than chance; the label lives in their ratio, which no one-feature-at-a-time scan tests",
+    "in_ml08_feature_set": []
+  },
+  "single_feature_auc": {
+    "leak_threshold_auc_distance": 0.4,
+    "watch_threshold_auc_distance": 0.15,
+    "flagged_as_leak": [
+      {
+        "feature": "trend_pct",
+        "auc": 0.0,
+        "separation": 0.5,
+        "rows_scored": 30000,
+        "in_model": false,
+        "is_label_source": true
+      }
+    ],
+    "flagged_as_watch": [],
+    "all_features": [
+      {
+        "feature": "trend_pct",
+        "auc": 0.0,
+        "separation": 0.5,
+        "rows_scored": 30000,
+        "in_model": false,
+        "is_label_source": true
+      },
+      {
+        "feature": "impressions_prev_30d",
+        "auc": 0.6214,
+        "separation": 0.1214,
+        "rows_scored": 30000,
+        "in_model": false,
+        "is_label_source": true
+      },
+      {
+        "feature": "content_age_days",
+        "auc": 0.4085,
+        "separation": 0.0915,
+        "rows_scored": 30000,
+        "in_model": true,
+        "is_label_source": false
+      },
+      {
+        "feature": "age_tier_order",
+        "auc": 0.4149,
+        "separation": 0.0851,
+        "rows_scored": 30000,
+        "in_model": false,
+        "is_label_source": false
+      },
+      {
+        "feature": "impressions_90d",
+        "auc": 0.5845,
+        "separation": 0.0845,
+        "rows_scored": 30000,
+        "in_model": false,
+        "is_label_source": false
+      },
+      {
+        "feature": "log_impressions_90d",
+        "auc": 0.5845,
+        "separation": 0.0845,
+        "rows_scored": 30000,
+        "in_model": true,
+        "is_label_source": false
+      },
+      {
+        "feature": "measurable_opportunity",
+        "auc": 0.5821,
+        "separation": 0.0821,
+        "rows_scored": 30000,
+        "in_model": false,
+        "is_label_source": false
+      },
+      {
+        "feature": "days_with_impressions",
+        "auc": 0.5794,
+        "separation": 0.0794,
+        "rows_scored": 30000,
+        "in_model": true,
+        "is_label_source": false
+      },
+      {
+        "feature": "word_count",
+        "auc": 0.5649,
+        "separation": 0.0649,
+        "rows_scored": 30000,
+        "in_model": true,
+        "is_label_source": false
+      },
+      {
+        "feature": "char_count",
+        "auc": 0.5614,
+        "separation": 0.0614,
+        "rows_scored": 30000,
+        "in_model": true,
+        "is_label_source": false
+      },
+      {
+        "feature": "sessions_prev_30d",
+        "auc": 0.5424,
+        "separation": 0.0424,
+        "rows_scored": 30000,
+        "in_model": false,
+        "is_label_source": false
+      },
+      {
+        "feature": "has_clicks",
+        "auc": 0.5404,
+        "separation": 0.0404,
+        "rows_scored": 30000,
+        "in_model": false,
+        "is_label_source": false
+      },
+      {
+        "feature": "sessions_last_30d",
+        "auc": 0.4667,
+        "separation": 0.0333,
+        "rows_scored": 30000,
+        "in_model": false,
+        "is_label_source": false
+      },
+      {
+        "feature": "search_volume",
+        "auc": 0.4692,
+        "separation": 0.0308,
+        "rows_scored": 30000,
+        "in_model": true,
+        "is_label_source": false
+      },
+      {
+        "feature": "avg_position",
+        "auc": 0.5295,
+        "separation": 0.0295,
+        "rows_scored": 30000,
+        "in_model": true,
+        "is_label_source": false
+      },
+      {
+        "feature": "days_since_last_update",
+        "auc": 0.5274,
+        "separation": 0.0274,
+        "rows_scored": 30000,
+        "in_model": true,
+        "is_label_source": false
+      },
+      {
+        "feature": "pageviews_90d",
+        "auc": 0.5258,
+        "separation": 0.0258,
+        "rows_scored": 30000,
+        "in_model": false,
+        "is_label_source": false
+      },
+      {
+        "feature": "clicks_90d",
+        "auc": 0.525,
+        "separation": 0.025,
+        "rows_scored": 30000,
+        "in_model": false,
+        "is_label_source": false
+      },
+      {
+        "feature": "log_clicks_90d",
+        "auc": 0.525,
+        "separation": 0.025,
+        "rows_scored": 30000,
+        "in_model": true,
+        "is_label_source": false
+      },
+      {
+        "feature": "scroll_rate",
+        "auc": 0.5205,
+        "separation": 0.0205,
+        "rows_scored": 30000,
+        "in_model": true,
+        "is_label_source": false
+      },
+      {
+        "feature": "days_with_sessions",
+        "auc": 0.5203,
+        "separation": 0.0203,
+        "rows_scored": 30000,
+        "in_model": true,
+        "is_label_source": false
+      },
+      {
+        "feature": "clicks_last_30d",
+        "auc": 0.4797,
+        "separation": 0.0203,
+        "rows_scored": 30000,
+        "in_model": false,
+        "is_label_source": false
+      },
+      {
+        "feature": "scroll_events_90d",
+        "auc": 0.52,
+        "separation": 0.02,
+        "rows_scored": 30000,
+        "in_model": false,
+        "is_label_source": false
+      },
+      {
+        "feature": "clicks_prev_30d",
+        "auc": 0.5198,
+        "separation": 0.0198,
+        "rows_scored": 30000,
+        "in_model": false,
+        "is_label_source": false
+      },
+      {
+        "feature": "sessions_90d",
+        "auc": 0.5191,
+        "separation": 0.0191,
+        "rows_scored": 30000,
+        "in_model": false,
+        "is_label_source": false
+      },
+      {
+        "feature": "users_90d",
+        "auc": 0.5191,
+        "separation": 0.0191,
+        "rows_scored": 30000,
+        "in_model": false,
+        "is_label_source": false
+      },
+      {
+        "feature": "log_sessions_90d",
+        "auc": 0.5191,
+        "separation": 0.0191,
+        "rows_scored": 30000,
+        "in_model": true,
+        "is_label_source": false
+      },
+      {
+        "feature": "ctr",
+        "auc": 0.5151,
+        "separation": 0.0151,
+        "rows_scored": 30000,
+        "in_model": true,
+        "is_label_source": false
+      },
+      {
+        "feature": "impressions_last_30d",
+        "auc": 0.4857,
+        "separation": 0.0143,
+        "rows_scored": 30000,
+        "in_model": false,
+        "is_label_source": true
+      },
+      {
+        "feature": "engaged_sessions_90d",
+        "auc": 0.4917,
+        "separation": 0.0083,
+        "rows_scored": 30000,
+        "in_model": false,
+        "is_label_source": false
+      },
+      {
+        "feature": "engagement_rate",
+        "auc": 0.4958,
+        "separation": 0.0042,
+        "rows_scored": 30000,
+        "in_model": true,
+        "is_label_source": false
+      },
+      {
+        "feature": "cpc",
+        "auc": 0.4982,
+        "separation": 0.0018,
+        "rows_scored": 30000,
+        "in_model": true,
+        "is_label_source": false
+      },
+      {
+        "feature": "competition",
+        "auc": 0.4984,
+        "separation": 0.0016,
+        "rows_scored": 30000,
+        "in_model": true,
+        "is_label_source": false
+      },
+      {
+        "feature": "ai_traffic_pct",
+        "auc": 0.5015,
+        "separation": 0.0015,
+        "rows_scored": 30000,
+        "in_model": true,
+        "is_label_source": false
+      },
+      {
+        "feature": "has_ai_sessions",
+        "auc": 0.5014,
+        "separation": 0.0014,
+        "rows_scored": 30000,
+        "in_model": false,
+        "is_label_source": false
+      },
+      {
+        "feature": "ai_sessions_90d",
+        "auc": 0.5012,
+        "separation": 0.0012,
+        "rows_scored": 30000,
+        "in_model": false,
+        "is_label_source": false
+      },
+      {
+        "feature": "log_ai_sessions_90d",
+        "auc": 0.5012,
+        "separation": 0.0012,
+        "rows_scored": 30000,
+        "in_model": true,
+        "is_label_source": false
+      }
+    ]
+  },
+  "split_comparison": {
+    "naive_random": {
+      "type": "StratifiedKFold(n_splits=5, shuffle=True)",
+      "client_overlap_share": 1.0,
+      "metrics": {
+        "logistic_regression": {
+          "roc_auc": {
+            "mean": 0.717213560511268,
+            "std": 0.004325338179839627,
+            "folds": 5,
+            "per_fold": [
+              0.7175,
+              0.7153,
+              0.7249,
+              0.7167,
+              0.7117
+            ]
+          },
+          "average_precision": {
+            "mean": 0.7333414963211784,
+            "std": 0.009728105812861614,
+            "folds": 5,
+            "per_fold": [
+              0.7344,
+              0.7347,
+              0.7491,
+              0.7296,
+              0.719
+            ]
+          },
+          "p@20": {
+            "mean": 0.9099999999999999,
+            "std": 0.07348469228349531,
+            "folds": 5,
+            "per_fold": [
+              0.95,
+              0.95,
+              1.0,
+              0.85,
+              0.8
+            ]
+          },
+          "p@50": {
+            "mean": 0.8959999999999999,
+            "std": 0.048000000000000015,
+            "folds": 5,
+            "per_fold": [
+              0.92,
+              0.92,
+              0.96,
+              0.84,
+              0.84
+            ]
+          },
+          "p@100": {
+            "mean": 0.9039999999999999,
+            "std": 0.0417612260356422,
+            "folds": 5,
+            "per_fold": [
+              0.91,
+              0.92,
+              0.97,
+              0.87,
+              0.85
+            ]
+          },
+          "p@500": {
+            "mean": 0.8367999999999999,
+            "std": 0.021339165869358606,
+            "folds": 5,
+            "per_fold": [
+              0.84,
+              0.848,
+              0.866,
+              0.828,
+              0.802
+            ]
+          },
+          "p@1000": {
+            "mean": 0.8006,
+            "std": 0.015717506163510763,
+            "folds": 5,
+            "per_fold": [
+              0.787,
+              0.815,
+              0.823,
+              0.795,
+              0.783
+            ]
+          }
+        },
+        "random_forest": {
+          "roc_auc": {
+            "mean": 0.7743724701296679,
+            "std": 0.00562986849664987,
+            "folds": 5,
+            "per_fold": [
+              0.775,
+              0.7644,
+              0.7789,
+              0.7805,
+              0.7731
+            ]
+          },
+          "average_precision": {
+            "mean": 0.7914106200275992,
+            "std": 0.006080431240703477,
+            "folds": 5,
+            "per_fold": [
+              0.7888,
+              0.7862,
+              0.7995,
+              0.7978,
+              0.7848
+            ]
+          },
+          "p@20": {
+            "mean": 0.95,
+            "std": 0.06324555320336758,
+            "folds": 5,
+            "per_fold": [
+              1.0,
+              0.9,
+              1.0,
+              1.0,
+              0.85
+            ]
+          },
+          "p@50": {
+            "mean": 0.952,
+            "std": 0.039191835884530846,
+            "folds": 5,
+            "per_fold": [
+              0.98,
+              0.94,
+              0.98,
+              0.98,
+              0.88
+            ]
+          },
+          "p@100": {
+            "mean": 0.96,
+            "std": 0.014142135623730963,
+            "folds": 5,
+            "per_fold": [
+              0.95,
+              0.96,
+              0.97,
+              0.98,
+              0.94
+            ]
+          },
+          "p@500": {
+            "mean": 0.9087999999999999,
+            "std": 0.014675149062275326,
+            "folds": 5,
+            "per_fold": [
+              0.9,
+              0.912,
+              0.934,
+              0.908,
+              0.89
+            ]
+          },
+          "p@1000": {
+            "mean": 0.8629999999999999,
+            "std": 0.010315037566582112,
+            "folds": 5,
+            "per_fold": [
+              0.85,
+              0.87,
+              0.874,
+              0.87,
+              0.851
+            ]
+          }
+        },
+        "decision_tree_depth2": {
+          "roc_auc": {
+            "mean": 0.6481575344389828,
+            "std": 0.004074092529380665,
+            "folds": 5,
+            "per_fold": [
+              0.6476,
+              0.6416,
+              0.6544,
+              0.648,
+              0.6491
+            ]
+          },
+          "average_precision": {
+            "mean": 0.6297123807093505,
+            "std": 0.0028430418710574607,
+            "folds": 5,
+            "per_fold": [
+              0.6299,
+              0.6254,
+              0.6343,
+              0.629,
+              0.63
+            ]
+          },
+          "p@20": {
+            "mean": 0.6799999999999999,
+            "std": 0.08717797887081347,
+            "folds": 5,
+            "per_fold": [
+              0.75,
+              0.55,
+              0.8,
+              0.65,
+              0.65
+            ]
+          },
+          "p@50": {
+            "mean": 0.64,
+            "std": 0.035777087639996666,
+            "folds": 5,
+            "per_fold": [
+              0.66,
+              0.66,
+              0.68,
+              0.58,
+              0.62
+            ]
+          },
+          "p@100": {
+            "mean": 0.646,
+            "std": 0.016248076809271938,
+            "folds": 5,
+            "per_fold": [
+              0.66,
+              0.67,
+              0.64,
+              0.63,
+              0.63
+            ]
+          },
+          "p@500": {
+            "mean": 0.6367999999999999,
+            "std": 0.01587954659302338,
+            "folds": 5,
+            "per_fold": [
+              0.644,
+              0.654,
+              0.614,
+              0.65,
+              0.622
+            ]
+          },
+          "p@1000": {
+            "mean": 0.6380000000000001,
+            "std": 0.014324803663575999,
+            "folds": 5,
+            "per_fold": [
+              0.654,
+              0.644,
+              0.635,
+              0.645,
+              0.612
+            ]
+          }
+        },
+        "baseline_rule": {
+          "roc_auc": {
+            "mean": 0.5324424307784169,
+            "std": 0.006773601533965752,
+            "folds": 5,
+            "per_fold": [
+              0.5274,
+              0.5226,
+              0.5419,
+              0.5339,
+              0.5364
+            ]
+          },
+          "average_precision": {
+            "mean": 0.5562703844628053,
+            "std": 0.004080721342779264,
+            "folds": 5,
+            "per_fold": [
+              0.553,
+              0.5507,
+              0.562,
+              0.5591,
+              0.5565
+            ]
+          },
+          "p@20": {
+            "mean": 0.5599999999999999,
+            "std": 0.09695359714832656,
+            "folds": 5,
+            "per_fold": [
+              0.7,
+              0.55,
+              0.4,
+              0.6,
+              0.55
+            ]
+          },
+          "p@50": {
+            "mean": 0.556,
+            "std": 0.040792156108742275,
+            "folds": 5,
+            "per_fold": [
+              0.6,
+              0.56,
+              0.56,
+              0.58,
+              0.48
+            ]
+          },
+          "p@100": {
+            "mean": 0.506,
+            "std": 0.026532998322843202,
+            "folds": 5,
+            "per_fold": [
+              0.54,
+              0.5,
+              0.52,
+              0.51,
+              0.46
+            ]
+          },
+          "p@500": {
+            "mean": 0.5676,
+            "std": 0.016752313273097508,
+            "folds": 5,
+            "per_fold": [
+              0.554,
+              0.566,
+              0.592,
+              0.58,
+              0.546
+            ]
+          },
+          "p@1000": {
+            "mean": 0.5635999999999999,
+            "std": 0.010669582934679275,
+            "folds": 5,
+            "per_fold": [
+              0.547,
+              0.558,
+              0.578,
+              0.571,
+              0.564
+            ]
+          }
+        }
+      }
+    },
+    "grouped_by_client": {
+      "type": "GroupKFold(n_splits=5) on client_id",
+      "client_overlap_share": 0.0,
+      "metrics": {
+        "logistic_regression": {
+          "roc_auc": {
+            "mean": 0.6604903314907362,
+            "std": 0.0417012067447332,
+            "folds": 5,
+            "per_fold": [
+              0.5994,
+              0.6246,
+              0.7103,
+              0.6906,
+              0.6775
+            ]
+          },
+          "average_precision": {
+            "mean": 0.6670297648364578,
+            "std": 0.08527678060428032,
+            "folds": 5,
+            "per_fold": [
+              0.5901,
+              0.7436,
+              0.5396,
+              0.7399,
+              0.722
+            ]
+          },
+          "p@20": {
+            "mean": 0.78,
+            "std": 0.1630950643030009,
+            "folds": 5,
+            "per_fold": [
+              0.7,
+              0.95,
+              0.5,
+              0.9,
+              0.85
+            ]
+          },
+          "p@50": {
+            "mean": 0.788,
+            "std": 0.09516301802696256,
+            "folds": 5,
+            "per_fold": [
+              0.76,
+              0.9,
+              0.62,
+              0.82,
+              0.84
+            ]
+          },
+          "p@100": {
+            "mean": 0.752,
+            "std": 0.10777754868245981,
+            "folds": 5,
+            "per_fold": [
+              0.74,
+              0.85,
+              0.55,
+              0.79,
+              0.83
+            ]
+          },
+          "p@500": {
+            "mean": 0.7276,
+            "std": 0.08294962326617286,
+            "folds": 5,
+            "per_fold": [
+              0.692,
+              0.812,
+              0.582,
+              0.768,
+              0.784
+            ]
+          },
+          "p@1000": {
+            "mean": 0.71,
+            "std": 0.08447011305781475,
+            "folds": 5,
+            "per_fold": [
+              0.663,
+              0.798,
+              0.567,
+              0.755,
+              0.767
+            ]
+          }
+        },
+        "random_forest": {
+          "roc_auc": {
+            "mean": 0.6707028436878273,
+            "std": 0.041072687571427145,
+            "folds": 5,
+            "per_fold": [
+              0.6581,
+              0.6122,
+              0.7404,
+              0.6711,
+              0.6716
+            ]
+          },
+          "average_precision": {
+            "mean": 0.6798056109330676,
+            "std": 0.05216362209774857,
+            "folds": 5,
+            "per_fold": [
+              0.6403,
+              0.7362,
+              0.5981,
+              0.719,
+              0.7055
+            ]
+          },
+          "p@20": {
+            "mean": 0.78,
+            "std": 0.11224972160321826,
+            "folds": 5,
+            "per_fold": [
+              0.9,
+              0.85,
+              0.85,
+              0.6,
+              0.7
+            ]
+          },
+          "p@50": {
+            "mean": 0.776,
+            "std": 0.088,
+            "folds": 5,
+            "per_fold": [
+              0.86,
+              0.86,
+              0.78,
+              0.76,
+              0.62
+            ]
+          },
+          "p@100": {
+            "mean": 0.776,
+            "std": 0.07787168933572713,
+            "folds": 5,
+            "per_fold": [
+              0.81,
+              0.89,
+              0.77,
+              0.76,
+              0.65
+            ]
+          },
+          "p@500": {
+            "mean": 0.7508,
+            "std": 0.04694848240358787,
+            "folds": 5,
+            "per_fold": [
+              0.758,
+              0.834,
+              0.702,
+              0.71,
+              0.75
+            ]
+          },
+          "p@1000": {
+            "mean": 0.726,
+            "std": 0.053721504074253176,
+            "folds": 5,
+            "per_fold": [
+              0.712,
+              0.784,
+              0.631,
+              0.735,
+              0.768
+            ]
+          }
+        },
+        "decision_tree_depth2": {
+          "roc_auc": {
+            "mean": 0.6079741857039966,
+            "std": 0.061174763964609455,
+            "folds": 5,
+            "per_fold": [
+              0.5692,
+              0.508,
+              0.6775,
+              0.6413,
+              0.6437
+            ]
+          },
+          "average_precision": {
+            "mean": 0.6060890758270809,
+            "std": 0.08150614182210311,
+            "folds": 5,
+            "per_fold": [
+              0.5294,
+              0.649,
+              0.4892,
+              0.6967,
+              0.6662
+            ]
+          },
+          "p@20": {
+            "mean": 0.64,
+            "std": 0.03741657386773941,
+            "folds": 5,
+            "per_fold": [
+              0.6,
+              0.6,
+              0.65,
+              0.65,
+              0.7
+            ]
+          },
+          "p@50": {
+            "mean": 0.6280000000000001,
+            "std": 0.07652450587883598,
+            "folds": 5,
+            "per_fold": [
+              0.5,
+              0.68,
+              0.58,
+              0.68,
+              0.7
+            ]
+          },
+          "p@100": {
+            "mean": 0.608,
+            "std": 0.06305553108173777,
+            "folds": 5,
+            "per_fold": [
+              0.56,
+              0.59,
+              0.53,
+              0.7,
+              0.66
+            ]
+          },
+          "p@500": {
+            "mean": 0.6115999999999999,
+            "std": 0.06599878786765707,
+            "folds": 5,
+            "per_fold": [
+              0.562,
+              0.61,
+              0.518,
+              0.69,
+              0.678
+            ]
+          },
+          "p@1000": {
+            "mean": 0.6128,
+            "std": 0.07435159715836641,
+            "folds": 5,
+            "per_fold": [
+              0.557,
+              0.621,
+              0.504,
+              0.705,
+              0.677
+            ]
+          }
+        },
+        "baseline_rule": {
+          "roc_auc": {
+            "mean": 0.5394484341183218,
+            "std": 0.026172738309417725,
+            "folds": 5,
+            "per_fold": [
+              0.575,
+              0.5055,
+              0.5519,
+              0.513,
+              0.5519
+            ]
+          },
+          "average_precision": {
+            "mean": 0.5679166086659214,
+            "std": 0.08741332489335846,
+            "folds": 5,
+            "per_fold": [
+              0.5292,
+              0.6562,
+              0.415,
+              0.6299,
+              0.6093
+            ]
+          },
+          "p@20": {
+            "mean": 0.6100000000000001,
+            "std": 0.20346989949375807,
+            "folds": 5,
+            "per_fold": [
+              0.4,
+              0.8,
+              0.35,
+              0.65,
+              0.85
+            ]
+          },
+          "p@50": {
+            "mean": 0.616,
+            "std": 0.13588230201170423,
+            "folds": 5,
+            "per_fold": [
+              0.5,
+              0.78,
+              0.44,
+              0.6,
+              0.76
+            ]
+          },
+          "p@100": {
+            "mean": 0.602,
+            "std": 0.17485994395515514,
+            "folds": 5,
+            "per_fold": [
+              0.52,
+              0.82,
+              0.32,
+              0.61,
+              0.74
+            ]
+          },
+          "p@500": {
+            "mean": 0.5924,
+            "std": 0.10727460090813669,
+            "folds": 5,
+            "per_fold": [
+              0.452,
+              0.666,
+              0.472,
+              0.7,
+              0.672
+            ]
+          },
+          "p@1000": {
+            "mean": 0.5584,
+            "std": 0.06705400808303705,
+            "folds": 5,
+            "per_fold": [
+              0.498,
+              0.65,
+              0.466,
+              0.593,
+              0.585
+            ]
+          }
+        }
+      }
+    },
+    "inflation": {
+      "logistic_regression": {
+        "roc_auc": {
+          "grouped": 0.6605,
+          "naive_random": 0.7172,
+          "absolute_gap": 0.0567,
+          "relative_inflation_pct": 8.59
+        },
+        "average_precision": {
+          "grouped": 0.667,
+          "naive_random": 0.7333,
+          "absolute_gap": 0.0663,
+          "relative_inflation_pct": 9.94
+        },
+        "p@50": {
+          "grouped": 0.788,
+          "naive_random": 0.896,
+          "absolute_gap": 0.108,
+          "relative_inflation_pct": 13.71
+        }
+      },
+      "random_forest": {
+        "roc_auc": {
+          "grouped": 0.6707,
+          "naive_random": 0.7744,
+          "absolute_gap": 0.1037,
+          "relative_inflation_pct": 15.46
+        },
+        "average_precision": {
+          "grouped": 0.6798,
+          "naive_random": 0.7914,
+          "absolute_gap": 0.1116,
+          "relative_inflation_pct": 16.42
+        },
+        "p@50": {
+          "grouped": 0.776,
+          "naive_random": 0.952,
+          "absolute_gap": 0.176,
+          "relative_inflation_pct": 22.68
+        }
+      },
+      "decision_tree_depth2": {
+        "roc_auc": {
+          "grouped": 0.608,
+          "naive_random": 0.6482,
+          "absolute_gap": 0.0402,
+          "relative_inflation_pct": 6.61
+        },
+        "average_precision": {
+          "grouped": 0.6061,
+          "naive_random": 0.6297,
+          "absolute_gap": 0.0236,
+          "relative_inflation_pct": 3.9
+        },
+        "p@50": {
+          "grouped": 0.628,
+          "naive_random": 0.64,
+          "absolute_gap": 0.012,
+          "relative_inflation_pct": 1.91
+        }
+      },
+      "baseline_rule": {
+        "roc_auc": {
+          "grouped": 0.5394,
+          "naive_random": 0.5324,
+          "absolute_gap": -0.007,
+          "relative_inflation_pct": -1.3
+        },
+        "average_precision": {
+          "grouped": 0.5679,
+          "naive_random": 0.5563,
+          "absolute_gap": -0.0116,
+          "relative_inflation_pct": -2.05
+        },
+        "p@50": {
+          "grouped": 0.616,
+          "naive_random": 0.556,
+          "absolute_gap": -0.06,
+          "relative_inflation_pct": -9.74
+        }
+      }
+    }
+  },
+  "shuffled_label_null": {
+    "design": "grouped folds, label permuted with seed 42",
+    "expectation": "roc_auc ~= 0.50, precision@k ~= base rate",
+    "metrics": {
+      "logistic_regression": {
+        "roc_auc": {
+          "mean": 0.5005767414087802,
+          "std": 0.0062344212295878665,
+          "folds": 5,
+          "per_fold": [
+            0.4934,
+            0.5017,
+            0.5043,
+            0.5097,
+            0.4939
+          ]
+        },
+        "average_precision": {
+          "mean": 0.5415068412872048,
+          "std": 0.002845206125320331,
+          "folds": 5,
+          "per_fold": [
+            0.5374,
+            0.5445,
+            0.5423,
+            0.539,
+            0.5443
+          ]
+        },
+        "p@20": {
+          "mean": 0.5799999999999998,
+          "std": 0.06782329983125265,
+          "folds": 5,
+          "per_fold": [
+            0.5,
+            0.55,
+            0.6,
+            0.7,
+            0.55
+          ]
+        },
+        "p@50": {
+          "mean": 0.5399999999999999,
+          "std": 0.09208691546577072,
+          "folds": 5,
+          "per_fold": [
+            0.58,
+            0.62,
+            0.44,
+            0.64,
+            0.42
+          ]
+        },
+        "p@100": {
+          "mean": 0.536,
+          "std": 0.058855755878248636,
+          "folds": 5,
+          "per_fold": [
+            0.59,
+            0.61,
+            0.46,
+            0.54,
+            0.48
+          ]
+        },
+        "p@500": {
+          "mean": 0.5307999999999999,
+          "std": 0.008447484832777158,
+          "folds": 5,
+          "per_fold": [
+            0.528,
+            0.53,
+            0.53,
+            0.52,
+            0.546
+          ]
+        },
+        "p@1000": {
+          "mean": 0.5346,
+          "std": 0.008089499366462681,
+          "folds": 5,
+          "per_fold": [
+            0.524,
+            0.544,
+            0.538,
+            0.541,
+            0.526
+          ]
+        }
+      },
+      "random_forest": {
+        "roc_auc": {
+          "mean": 0.5015884999050289,
+          "std": 0.0046538715074932605,
+          "folds": 5,
+          "per_fold": [
+            0.4971,
+            0.4983,
+            0.5099,
+            0.4993,
+            0.5033
+          ]
+        },
+        "average_precision": {
+          "mean": 0.5462951114757228,
+          "std": 0.008534641453088016,
+          "folds": 5,
+          "per_fold": [
+            0.5427,
+            0.5437,
+            0.5576,
+            0.5337,
+            0.5538
+          ]
+        },
+        "p@20": {
+          "mean": 0.6300000000000001,
+          "std": 0.06782329983125268,
+          "folds": 5,
+          "per_fold": [
+            0.6,
+            0.65,
+            0.75,
+            0.6,
+            0.55
+          ]
+        },
+        "p@50": {
+          "mean": 0.5800000000000001,
+          "std": 0.052153619241621194,
+          "folds": 5,
+          "per_fold": [
+            0.54,
+            0.54,
+            0.68,
+            0.56,
+            0.58
+          ]
+        },
+        "p@100": {
+          "mean": 0.5700000000000001,
+          "std": 0.03898717737923585,
+          "folds": 5,
+          "per_fold": [
+            0.58,
+            0.53,
+            0.64,
+            0.54,
+            0.56
+          ]
+        },
+        "p@500": {
+          "mean": 0.5492,
+          "std": 0.023068593368473927,
+          "folds": 5,
+          "per_fold": [
+            0.546,
+            0.538,
+            0.59,
+            0.52,
+            0.552
+          ]
+        },
+        "p@1000": {
+          "mean": 0.5494,
+          "std": 0.011943198901466865,
+          "folds": 5,
+          "per_fold": [
+            0.55,
+            0.545,
+            0.57,
+            0.533,
+            0.549
+          ]
+        }
+      },
+      "decision_tree_depth2": {
+        "roc_auc": {
+          "mean": 0.5023600124960397,
+          "std": 0.003628128400529305,
+          "folds": 5,
+          "per_fold": [
+            0.4982,
+            0.5088,
+            0.5033,
+            0.5003,
+            0.5011
+          ]
+        },
+        "average_precision": {
+          "mean": 0.5435115386289651,
+          "std": 0.006420955450212859,
+          "folds": 5,
+          "per_fold": [
+            0.5416,
+            0.5472,
+            0.5459,
+            0.5321,
+            0.5507
+          ]
+        },
+        "p@20": {
+          "mean": 0.59,
+          "std": 0.06633249580710798,
+          "folds": 5,
+          "per_fold": [
+            0.6,
+            0.55,
+            0.7,
+            0.5,
+            0.6
+          ]
+        },
+        "p@50": {
+          "mean": 0.5760000000000001,
+          "std": 0.049638694583963416,
+          "folds": 5,
+          "per_fold": [
+            0.5,
+            0.54,
+            0.64,
+            0.6,
+            0.6
+          ]
+        },
+        "p@100": {
+          "mean": 0.5820000000000001,
+          "std": 0.033105890714493685,
+          "folds": 5,
+          "per_fold": [
+            0.55,
+            0.59,
+            0.64,
+            0.58,
+            0.55
+          ]
+        },
+        "p@500": {
+          "mean": 0.5484,
+          "std": 0.01606984754128051,
+          "folds": 5,
+          "per_fold": [
+            0.546,
+            0.536,
+            0.576,
+            0.53,
+            0.554
+          ]
+        },
+        "p@1000": {
+          "mean": 0.5444,
+          "std": 0.012768711759609867,
+          "folds": 5,
+          "per_fold": [
+            0.543,
+            0.535,
+            0.567,
+            0.53,
+            0.547
+          ]
+        }
+      }
+    }
+  },
+  "time_aware_split": {
+    "status": "not_applicable",
+    "reason": "the starter CSV is one undated snapshot; the contract's sealed test month (2026-06) needs the dated warehouse release to be run"
+  }
+}
