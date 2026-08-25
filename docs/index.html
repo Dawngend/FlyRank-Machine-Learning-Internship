@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Which pages should you refresh first? Ranking content decay across 30,000 pages</title>
+<meta name="description" content="Ranking 30,000 content pages for refresh review using a client-grouped random forest, with a leakage audit that found an exact label reconstruction in the shipped data.">
+<style>
+  :root{
+    --bg:#fbfaf8; --surface:#fff; --ink:#1c1b19; --muted:#5f5c57; --faint:#8b8781;
+    --line:#e3dfd8; --accent:#3b6ea5; --accent-soft:#eef3f9; --warn:#a8442a;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#16181c; --surface:#1d2025; --ink:#e8e6e3; --muted:#a8a49e; --faint:#7d7973;
+      --line:#2e323a; --accent:#7dabdc; --accent-soft:#1f2833; --warn:#e08a6d;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#16181c; --surface:#1d2025; --ink:#e8e6e3; --muted:#a8a49e; --faint:#7d7973;
+    --line:#2e323a; --accent:#7dabdc; --accent-soft:#1f2833; --warn:#e08a6d;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:760px; margin:0 auto; padding:0 22px 96px}
+  header{padding:64px 0 40px; border-bottom:1px solid var(--line); margin-bottom:44px}
+  .kicker{font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--faint); margin:0 0 18px}
+  h1{font-size:clamp(28px,5vw,40px); line-height:1.18; letter-spacing:-.02em; margin:0 0 20px; font-weight:650}
+  .byline{color:var(--muted); font-size:14.5px; margin:0}
+  .byline a{color:var(--accent)}
+  h2{font-size:13px; letter-spacing:.13em; text-transform:uppercase; color:var(--accent);
+     margin:56px 0 18px; padding-bottom:9px; border-bottom:1px solid var(--line); font-weight:650}
+  h3{font-size:19px; letter-spacing:-.01em; margin:34px 0 12px; font-weight:620}
+  p{margin:0 0 17px}
+  a{color:var(--accent)}
+  strong{font-weight:640}
+  code{font-family:var(--mono); font-size:.88em; background:var(--accent-soft);
+       padding:1px 5px; border-radius:4px}
+  pre{background:var(--surface); border:1px solid var(--line); border-radius:9px;
+      padding:15px 17px; overflow-x:auto; font-family:var(--mono); font-size:13px; line-height:1.6}
+  pre code{background:none; padding:0}
+  .abstract{background:var(--surface); border:1px solid var(--line); border-left:3px solid var(--accent);
+            border-radius:9px; padding:24px 26px; margin:0 0 8px}
+  .abstract p{margin:0; font-size:16.5px; line-height:1.72}
+  .tbl{overflow-x:auto; margin:22px 0}
+  table{border-collapse:collapse; width:100%; font-size:14.5px; min-width:420px}
+  th,td{padding:9px 13px; text-align:left; border-bottom:1px solid var(--line)}
+  th{font-size:12px; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); font-weight:600}
+  td.n,th.n{text-align:right; font-variant-numeric:tabular-nums}
+  tr.hi td{background:var(--accent-soft); font-weight:600}
+  figure{margin:30px 0}
+  figure svg{display:block; width:100%; height:auto; background:var(--surface);
+             border:1px solid var(--line); border-radius:9px}
+  figcaption{font-size:13.5px; color:var(--muted); margin-top:11px; line-height:1.55}
+  .note{border-left:3px solid var(--warn); background:var(--surface); border-radius:0 8px 8px 0;
+        padding:15px 19px; margin:24px 0; font-size:15px}
+  .note b{color:var(--warn)}
+  .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:14px; margin:26px 0}
+  .stat{background:var(--surface); border:1px solid var(--line); border-radius:9px; padding:15px 17px}
+  .stat .v{font-size:25px; font-weight:650; letter-spacing:-.02em; font-variant-numeric:tabular-nums}
+  .stat .l{font-size:12.5px; color:var(--muted); margin-top:3px; line-height:1.4}
+  ul,ol{margin:0 0 17px; padding-left:22px}
+  li{margin-bottom:8px}
+  footer{margin-top:64px; padding-top:26px; border-top:1px solid var(--line);
+         font-size:14px; color:var(--muted)}
+  @media (max-width:560px){ header{padding:40px 0 30px} h2{margin-top:44px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="kicker">FlyRank ML Internship &middot; Capstone</p>
+  <h1>Which pages should you refresh first?</h1>
+  <p class="byline">
+    Ranking content decay across 30,000 pages, and what a leakage audit found hiding in the data.<br>
+    Dawn Andrei Pamesa &middot; August 2026 &middot;
+    <a href="https://github.com/Dawngend/FlyRank-Machine-Learning-Internship">Repository and notebooks</a>
+  </p>
+</header>
+
+<h2>Abstract</h2>
+<div class="abstract">
+<p>
+Which pages should a content team review first, when there are more pages than review hours? This
+work ranks 30,000 pseudonymized content items across 32 clients, using a 90-day performance window
+from the FlyRank ML Internship starter release, against a label derived from the
+30-day-over-previous-30-day impression change. A transparent hand rule was built first, then compared
+against logistic regression and a random forest under a client-grouped 5-fold split, with a leakage
+audit run on the final feature set. The random forest ranked declining pages at precision@1000 of
+<strong>0.726</strong> (sd 0.054) against a base rate of <strong>0.542</strong>, ahead of the hand
+rule's 0.558 on all five held-out client folds; the audit also found that two shipped columns
+reconstruct the label exactly, and that a naive row-level split would have overstated the
+top-of-queue result by 22.7%. The output is a 1,000-page review queue with reason codes, intended to
+order human review of refresh candidates, and it is not evidence that refreshing any page recovers
+traffic.
+</p>
+</div>
+
+<h2>1. The problem</h2>
+
+<p>
+A content team has 30,000 pages and enough review hours for maybe a thousand. Somebody has to decide
+which ones a human opens first. In practice that order gets set by whoever asked most recently, or by
+whichever client is loudest.
+</p>
+
+<p>
+The cost of getting it wrong runs in both directions, and the two directions are not symmetric.
+Reviewing a page that was fine costs three to five hours of editorial time. Missing a page that is
+quietly decaying means it keeps decaying, and recovering visibility later is far more expensive than
+defending it now.
+</p>
+
+<div class="stats">
+  <div class="stat"><div class="v">30,000</div><div class="l">pages, 32 clients</div></div>
+  <div class="stat"><div class="v">0.542</div><div class="l">base rate of declining pages</div></div>
+  <div class="stat"><div class="v">1.44&times;</div><div class="l">lift from the shipped queue</div></div>
+</div>
+
+<p>
+That base rate is the number worth holding on to. Just over half the pages in this corpus are
+declining, so picking pages at random already finds one about half the time. Every result below is
+quoted next to it, because a precision score without its base rate is not a result.
+</p>
+
+<h3>A scope change, stated up front</h3>
+
+<p>
+This project was declared in Week 1 as <strong>AI Referral and GEO Opportunity Scoring</strong>:
+finding pages with strong search demand but disproportionately low AI referral traffic. The modelled
+deliverable is narrower, and the reason belongs here rather than in a footnote.
+</p>
+
+<p>
+The AI visibility gap is real and measurable. 16,726 pages (55.75%) have organic demand of at least
+500 impressions, and 15,033 of those (89.88%) receive zero AI referral traffic. What does not exist is
+a <strong>label</strong> for it. Nothing in the release records whether an AI engine later cited a
+page, so the gap can be described and ranked by rule, but it cannot be learned, validated, or checked
+for leakage. Building a supervised model on it would have meant inventing a target.
+</p>
+
+<p>
+The decay half of the same problem does have a label, so that is the half that carries the modelling.
+Reporting the missing label as a finding, rather than working around it, is the honest version of
+this project.
+</p>
+
+<h2>2. Data</h2>
+
+<p>
+The FlyRank ML Internship starter release: 30,000 pseudonymized content items, 44 columns, 32
+clients, over a trailing 90-day performance window. Clients appear only as opaque identifiers and are
+used for fold assignment, never as a feature.
+</p>
+
+<p><strong>The label.</strong> A page is declining when its impressions over the last 30 days fell
+more than 20% against the previous 30 days.</p>
+
+<div class="note">
+<b>A documentation discrepancy.</b> The published FlyRank research paper defines this cut at 10%. The
+shipped data cuts at 20%. Reconstructing the label at a 10% threshold agrees with the shipped label on
+93.3% of rows; at 20% it agrees on 100.0%. Anything built on the documented figure will not reproduce.
+Flagged here rather than silently corrected.
+</div>
+
+<p><strong>Excluded on purpose.</strong> <code>trend_direction</code> and <code>trend_pct</code>
+because the label is derived from them. <code>provider_used</code> and <code>model_used</code> as out
+of scope for a refresh decision. <code>impressions_last_30d</code> and
+<code>impressions_prev_30d</code> for the reason in section 4, which is the most interesting thing
+this project found.</p>
+
+<h2>3. Methodology</h2>
+
+<p>
+The question is "which first", which is a ranking question, so every scorer is judged on its
+predicted probability at precision@K rather than on hard labels. Accuracy appears nowhere in this
+work: a review queue is never consumed by thresholding at 0.5, it is consumed from the top down until
+the reviewer runs out of time.
+</p>
+
+<h3>The baseline came first</h3>
+
+<p>
+Before any model, a transparent hand rule scoring each page 0 to 100 from five stated conditions:
+stale and visible, thin and visible, page-one decay risk, low CTR while visible, and low engagement.
+Every point in the score traces to one sentence, so any row's position can be explained without a
+chart. The rule is scored on the identical test rows of each fold, so the comparison is a comparison.
+</p>
+
+<h3>The split is a correctness issue, not a preference</h3>
+
+<p>
+Folds are grouped by client, so no client appears in both train and test. That matters more than it
+usually does here: there are only 32 clients, one holds 12.3% of the corpus, and the per-client
+declining rate runs from 0.000 to 0.937 against a corpus rate of 0.542. Under a row-level shuffle the
+same client sits on both sides, and a model can score well by inferring which client a page belongs
+to and predicting that client's base rate. It would look like a content model and behave like a
+lookup table.
+</p>
+
+<p>
+A time-aware split is not available: the starter release is a single undated snapshot. That design is
+recorded for the dated warehouse release rather than claimed here.
+</p>
+
+<h2>4. What the leakage audit found</h2>
+
+<p>
+Week 3 excluded the label-derived columns by name. That was correct and it was not enough.
+</p>
+
+<p>
+The feature vector ships <code>impressions_last_30d</code> and <code>impressions_prev_30d</code>. The
+label is defined as the change between exactly those two windows. So they are not correlated with the
+label. <strong>They are the label, in unreduced form.</strong> The reconstruction is exact on
+<strong>30,000 of 30,000 rows</strong>, with no residual.
+</p>
+
+<figure>
+<svg viewBox="0 0 660 190" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bar chart: each impression column alone scores near chance, their ratio scores a perfect 1.000">
+  <style>
+    .lb{font:13px -apple-system,system-ui,sans-serif; fill:var(--ink)}
+    .vl{font:13px ui-monospace,monospace; fill:var(--ink); font-weight:600}
+    .ax{font:11px -apple-system,system-ui,sans-serif; fill:var(--faint)}
+  </style>
+  <line x1="250" y1="26" x2="250" y2="166" stroke="var(--line)" stroke-width="1" stroke-dasharray="3 3"/>
+  <text class="ax" x="250" y="182" text-anchor="middle">0.5 = chance</text>
+  <text class="lb" x="14" y="50">impressions_last_30d</text>
+  <rect x="250" y="38" width="-7" height="17" fill="var(--muted)"/>
+  <rect x="243" y="38" width="7" height="17" fill="var(--muted)"/>
+  <text class="vl" x="600" y="51" text-anchor="end">0.486</text>
+  <text class="lb" x="14" y="98">impressions_prev_30d</text>
+  <rect x="250" y="86" width="97" height="17" fill="var(--muted)"/>
+  <text class="vl" x="600" y="99" text-anchor="end">0.621</text>
+  <text class="lb" x="14" y="146">their ratio</text>
+  <rect x="250" y="134" width="333" height="17" fill="var(--warn)"/>
+  <text class="vl" x="600" y="147" text-anchor="end">1.000</text>
+</svg>
+<figcaption>
+Single-feature ROC-AUC against the label. Neither column is damning on its own, so a
+one-feature-at-a-time leakage scan finds nothing. Their ratio separates the label perfectly. A scan
+cannot see a leak that lives in an interaction.
+</figcaption>
+</figure>
+
+<p>
+This is the transferable lesson. The scan is worth running and it is not sufficient. What caught this
+was starting from the label's definition and asking which shipped columns appear in it: an audit of
+the data dictionary, not of the correlation table. Neither column is in the model, and the exclusion
+is now enforced by an assertion rather than by memory.
+</p>
+
+<h2>5. Results</h2>
+
+<div class="tbl">
+<table>
+<thead><tr><th>Scorer</th><th class="n">ROC-AUC</th><th class="n">precision@50</th><th class="n">precision@1000</th></tr></thead>
+<tbody>
+<tr><td>Base rate</td><td class="n">0.500</td><td class="n">0.542</td><td class="n">0.542</td></tr>
+<tr><td>Hand rule</td><td class="n">0.539</td><td class="n">0.616 <span style="color:var(--faint)">&plusmn;.136</span></td><td class="n">0.558 <span style="color:var(--faint)">&plusmn;.067</span></td></tr>
+<tr><td>Logistic regression</td><td class="n">0.660</td><td class="n">0.788 <span style="color:var(--faint)">&plusmn;.095</span></td><td class="n">0.710 <span style="color:var(--faint)">&plusmn;.084</span></td></tr>
+<tr class="hi"><td>Random forest</td><td class="n">0.671</td><td class="n">0.776 <span style="color:var(--faint)">&plusmn;.088</span></td><td class="n">0.726 <span style="color:var(--faint)">&plusmn;.054</span></td></tr>
+<tr><td>Decision tree, depth 2</td><td class="n">0.608</td><td class="n">0.628 <span style="color:var(--faint)">&plusmn;.077</span></td><td class="n">0.613 <span style="color:var(--faint)">&plusmn;.074</span></td></tr>
+</tbody>
+</table>
+</div>
+
+<p>
+The hand rule orders the first hundred rows and then collapses to chance. The forest holds its
+advantage a thousand rows deep, which is the difference between a way to find fifty pages and a queue
+that survives a full review cycle.
+</p>
+
+<h3>What the split was worth</h3>
+
+<p>
+The same models under a naive row-level shuffle instead of client grouping:
+</p>
+
+<figure>
+<svg viewBox="0 0 660 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bar chart: precision@50 inflation from a naive split rises with model capacity, from minus 9.7 percent for the hand rule to plus 22.7 percent for the random forest">
+  <style>
+    .l2{font:13px -apple-system,system-ui,sans-serif; fill:var(--ink)}
+    .v2{font:13px ui-monospace,monospace; fill:var(--ink); font-weight:600}
+    .a2{font:11px -apple-system,system-ui,sans-serif; fill:var(--faint)}
+  </style>
+  <line x1="235" y1="20" x2="235" y2="186" stroke="var(--line)" stroke-width="1"/>
+  <text class="a2" x="235" y="202" text-anchor="middle">0%</text>
+  <text class="a2" x="120" y="16">model capacity increases downward</text>
+
+  <text class="l2" x="14" y="45">hand rule</text>
+  <rect x="206" y="33" width="29" height="16" fill="var(--accent)"/>
+  <text class="v2" x="196" y="46" text-anchor="end">&minus;9.7%</text>
+
+  <text class="l2" x="14" y="85">tree, depth 2</text>
+  <rect x="235" y="73" width="6" height="16" fill="var(--muted)"/>
+  <text class="v2" x="253" y="86">+1.9%</text>
+
+  <text class="l2" x="14" y="125">logistic regression</text>
+  <rect x="235" y="113" width="41" height="16" fill="var(--muted)"/>
+  <text class="v2" x="288" y="126">+13.7%</text>
+
+  <text class="l2" x="14" y="165">random forest</text>
+  <rect x="235" y="153" width="68" height="16" fill="var(--warn)"/>
+  <text class="v2" x="315" y="166">+22.7%</text>
+</svg>
+<figcaption>
+Relative overstatement of precision@50 when the client grouping is removed. The hand rule is never
+fitted and so cannot benefit at all, which sets the scale for what "no leak" looks like. Every step up
+in model capacity buys more inflation. That ordering is the signature of client identity leaking
+through the split, not of a better model.
+</figcaption>
+</figure>
+
+<p>
+Under the naive split the forest reaches precision@50 of <strong>0.952</strong>. It is a real
+computation and a false claim. A shuffled-label null under the grouped design scores ROC-AUC 0.5016
+(sd 0.0047), confirming the harness measures the label and not the folds.
+</p>
+
+<h3>What the model actually ranks on</h3>
+
+<p>
+The forest's top four features are all about observed visibility, not content shape: days with
+impressions (0.130), log impressions (0.130), average position (0.108), and content age (0.084),
+together roughly 45% of total importance. Word count sits at 0.046.
+</p>
+
+<p>
+The most useful negative result in the project sits here. <strong>Days since last update</strong>
+carried the hand rule's single heaviest weight, 30 points, on the reasoning that a page nobody has
+touched in six months is the most urgent case. The forest ranks it <strong>12th, at 0.023</strong>,
+below scroll rate. Two independent lines of evidence agree the staleness rule was a bad bet: it fired
+on 17 of 30,000 rows, and the model does not use it when it is free to. Recency of editing appears
+not to carry information about whether a page is declining, at least in this corpus.
+</p>
+
+<p>The depth-2 tree makes the same point in one readable line:</p>
+
+<pre><code>days_with_impressions &gt; 12  AND  content_age_days &lt;= 373   &rarr;  at risk</code></pre>
+
+<p>
+Its entire learned rule is "a page that shows up consistently and is not yet very old is the one at
+risk". Nothing about word count, CTR, or edit recency.
+</p>
+
+<h3>The two scorers disagree, and measuring that is a result</h3>
+
+<p>
+When the hand rule's reason codes were attached to the forest's queue, they explained only
+<strong>55.6%</strong> of it. The rule fires on thinness, staleness, and weak CTR. The forest ranks on
+sustained visibility and age, for which the rule has no reason code at all. That gap is not a bug in
+either scorer. It is the clearest single statement of what the model learned that the hand rule did
+not, and it is why the delivered queue carries model-derived reason codes in a separate column,
+labelled as such.
+</p>
+
+<h2>6. Limitations</h2>
+
+<p>These are the boundaries of the work, written before a reader has to find them.</p>
+
+<ul>
+<li><strong>This does not predict that refreshing a page recovers traffic.</strong> No refresh outcome
+exists anywhere in the data. The model ranks pages by whether impressions already fell, not by
+whether an edit would help. Every result is observational.</li>
+
+<li><strong>The corpus is survivors only.</strong> All 30,000 rows pass the active-content filter
+(impressions and sessions both above zero). The model has never seen a page that already died and
+cannot rank one. The same filter sits under several findings in the source research paper, which
+means neither that paper's survivorship question nor mine can be audited from inside this file.</li>
+
+<li><strong>3,388 pages are structurally unrankable.</strong> They have no prior 30-day window, so
+under the label definition they cannot be declining, and all 3,388 are labelled not-declining by
+construction. They are excluded from the queue rather than ranked low, because ranking them would be
+an artefact of the label rather than a prediction.</li>
+
+<li><strong>Performance is markedly client-dependent.</strong> Fold metrics swing by up to 0.20
+depending on which clients land in the test fold. There is no basis for claiming even generalisation
+to a new client, and the queue should be worked within a client rather than across clients.</li>
+
+<li><strong>The advantage at the top of the queue is directional, not consistent.</strong> The forest
+leads the hand rule at precision@1000 on five of five folds, but at precision@50 on only four of five.
+On the fifth fold the hand rule wins, 0.76 to 0.62.</li>
+
+<li><strong>The within-queue ordering is not explainable.</strong> The model-derived reason codes fire
+on the whole queue, so they explain the population rather than why row 12 sits above row 400.</li>
+
+<li><strong>No sealed evaluation is claimed.</strong> The contract defines a sealed test month; the
+starter release is undated, so the design is recorded and not executed.</li>
+</ul>
+
+<h2>7. Recommendations</h2>
+
+<p>
+The shipped output is a 1,000-page queue drawn from 26,612 eligible pages, scored out of fold so that
+every page is ranked by a model that never saw its client. Working it top down surfaces
+<strong>778 declining pages against roughly 542</strong> expected from an arbitrary order: about 236
+fewer wasted reviews per thousand.
+</p>
+
+<figure>
+<svg viewBox="0 0 660 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Bar chart of queue precision at review depths 100, 250, 500 and 1000, all well above the 0.542 base rate">
+  <style>
+    .l3{font:12px -apple-system,system-ui,sans-serif; fill:var(--muted)}
+    .v3{font:13px ui-monospace,monospace; fill:var(--ink); font-weight:600}
+  </style>
+  <line x1="60" y1="118" x2="620" y2="118" stroke="var(--warn)" stroke-width="1" stroke-dasharray="4 3"/>
+  <text class="l3" x="620" y="112" text-anchor="end" fill="var(--warn)">base rate 0.542</text>
+  <line x1="60" y1="210" x2="620" y2="210" stroke="var(--line)"/>
+
+  <rect x="88" y="55" width="96" height="155" fill="var(--accent)"/>
+  <text class="v3" x="136" y="46" text-anchor="middle">0.770</text>
+  <text class="l3" x="136" y="228" text-anchor="middle">top 100</text>
+
+  <rect x="228" y="48" width="96" height="162" fill="var(--accent)"/>
+  <text class="v3" x="276" y="39" text-anchor="middle">0.804</text>
+  <text class="l3" x="276" y="228" text-anchor="middle">top 250</text>
+
+  <rect x="368" y="53" width="96" height="157" fill="var(--accent)"/>
+  <text class="v3" x="416" y="44" text-anchor="middle">0.782</text>
+  <text class="l3" x="416" y="228" text-anchor="middle">top 500</text>
+
+  <rect x="508" y="54" width="96" height="156" fill="var(--accent)"/>
+  <text class="v3" x="556" y="45" text-anchor="middle">0.778</text>
+  <text class="l3" x="556" y="228" text-anchor="middle">top 1000</text>
+</svg>
+<figcaption>
+Precision of the delivered queue at each depth a review cycle might reach, against the 0.542 base
+rate. These figures describe this specific artefact, drawn from 26,612 eligible pages. They are not
+the generalisation claim, which remains precision@1000 of 0.726 (sd 0.054) measured per fold.
+</figcaption>
+</figure>
+
+<h3>Four checks before any page is edited</h3>
+
+<ol>
+<li><strong>Is the decline real, or is it the measurement?</strong> The label is one 30-day window
+against the previous one. A seasonal dip, a SERP feature change, or a tracking gap all read as
+declining.</li>
+<li><strong>Does the reason code match what you see?</strong> If the source column says
+<code>model</code>, the hand rule found nothing wrong with the page. Read that as "the model noticed a
+pattern", not as a diagnosis.</li>
+<li><strong>Is a refresh the right instrument?</strong> A page can decline because the topic died,
+because a competitor published something better, or because another page cannibalised it. Only one of
+those is fixed by refreshing, and the model has no feature for any of them.</li>
+<li><strong>Would you defend this edit to the client?</strong> "It was ranked 12th" is not a
+justification.</li>
+</ol>
+
+<h3>Never automated, at any confidence score</h3>
+
+<p>
+Publishing an edit. Deleting, de-indexing, or redirecting a page. Client-facing performance promises.
+Budget allocation between clients. Bulk machine regeneration of flagged pages.
+</p>
+
+<div class="note">
+<b>The confidence column is not a calibrated probability.</b> The bands are tertiles of this queue's
+own score distribution, so "high" means high relative to the other 999 rows in front of you, and
+nothing more. The model's probabilities were never calibrated and no calibration is claimed.
+</div>
+
+<h3>Monitoring</h3>
+
+<p>
+Six triggers ship with the queue, each anchored to a measured value rather than a round number, using
+the 0.054 fold spread as the scale of ordinary variation. A trigger inside that band is a false alarm
+generator. The two that matter most: queue precision falling below 0.670, which means retrain; and
+any change to the 20% label threshold, the window, or the metric, which means stop and rebuild,
+because every number in this paper was computed against that cut.
+</p>
+
+<h2>8. Reproducibility</h2>
+
+<pre><code>git clone https://github.com/Dawngend/FlyRank-Machine-Learning-Internship
+pip install -r requirements.txt
+python scripts/run_all.py
+python work/scripts/baseline_action_score.py
+python work/scripts/train_refresh_model.py
+python work/scripts/validation_audit.py
+python work/scripts/action_playbook.py</code></pre>
+
+<p>
+Seed 42, fixed in every script that samples, splits, or permutes. The hand rule is deterministic and
+needs none. The random forest figure is library-version sensitive at the third decimal, so the stable
+claim is the lift over the baseline rather than the exact value.
+</p>
+
+<p>
+Every number on this page traces to a committed JSON receipt rather than to a notebook cell that has
+to be re-run to be believed: <code>data_contract.json</code>,
+<code>baseline_action_score_metrics.json</code>, <code>model_comparison.json</code>,
+<code>validation_audit.json</code>, and <code>action_playbook_metrics.json</code>, all under
+<code>work/outputs/</code>. The notebooks that produced them are in
+<a href="https://github.com/Dawngend/FlyRank-Machine-Learning-Internship/tree/main/work/notebooks"><code>work/notebooks/</code></a>,
+one per assignment, each running top to bottom.
+</p>
+
+<h2>9. Acknowledgments and data credit</h2>
+
+<p>
+Built on the FlyRank ML Internship dataset, provided by <a href="https://flyrank.ai">FlyRank</a>. The
+starter release and the gated warehouse release are both FlyRank's; the analysis, the errors, and the
+claims are mine. Data use follows the repository's <code>DATA_USE.md</code>: no client-identifying
+details, no causal claims without a design, and no dataset files committed to version control.
+</p>
+
+<footer>
+Dawn Andrei Pamesa &middot; FlyRank Machine Learning Internship capstone, August 2026 &middot;
+<a href="https://github.com/Dawngend/FlyRank-Machine-Learning-Internship">Source, notebooks, and receipts</a>
+</footer>
+
+</div>
+</body>
+</html>
