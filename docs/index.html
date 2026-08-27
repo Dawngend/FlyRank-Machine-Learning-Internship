@@ -391,6 +391,11 @@ On the fifth fold the hand rule wins, 0.76 to 0.62.</li>
 <li><strong>The within-queue ordering is not explainable.</strong> The model-derived reason codes fire
 on the whole queue, so they explain the population rather than why row 12 sits above row 400.</li>
 
+<li><strong>The queue systematically excludes older content.</strong> Pages older than
+365 days are 23% of the corpus and take none of the delivered top 1,000. Part of that is a
+data-quality gradient rather than a content finding: median word count is zero past 365 days, so
+the model sees less about an old page than a new one.</li>
+
 <li><strong>No sealed evaluation is claimed.</strong> The contract defines a sealed test month; the
 starter release is undated, so the design is recorded and not executed.</li>
 </ul>
@@ -436,6 +441,87 @@ rate. These figures describe this specific artefact, drawn from 26,612 eligible 
 the generalisation claim, which remains precision@1000 of 0.726 (sd 0.054) measured per fold.
 </figcaption>
 </figure>
+
+<h3>What to do when you get there</h3>
+
+<p>
+The queue answers which page to review next. It does not answer what to do about it: every
+delivered row carries the same instruction. Each eligible page is therefore assigned one of eight
+archetypes, drawn only from observable page condition, each pointing at a different kind of edit.
+Assignment is mutually exclusive and first match wins, and 8,713 of the 26,612 eligible pages
+satisfy more than one definition, so the order runs cheapest and most reversible first.
+</p>
+
+<div class="tbl">
+<table>
+<thead>
+<tr><th>Archetype</th><th>Suggested action</th><th>Rows</th><th>Share of queue</th></tr>
+</thead>
+<tbody>
+<tr><td><code>deep_but_substantial</code></td><td>Reassess intent or consolidate</td><td>315</td><td>31.5%</td></tr>
+<tr><td><code>no_clear_defect</code></td><td>Manual diagnosis</td><td>285</td><td>28.5%</td></tr>
+<tr><td><code>snippet_gap</code></td><td>Rewrite title and meta</td><td>254</td><td>25.4%</td></tr>
+<tr><td><code>low_demand</code></td><td>No content edit; review targeting</td><td>119</td><td>11.9%</td></tr>
+<tr><td><code>weak_engagement</code></td><td>Review intro and layout</td><td>18</td><td>1.8%</td></tr>
+<tr><td><code>stale_authority</code></td><td>Refresh facts and dates</td><td>7</td><td>0.7%</td></tr>
+<tr><td><code>insufficient_page_data</code></td><td>Fix the record first</td><td>2</td><td>0.2%</td></tr>
+<tr><td><code>thin_with_demand</code></td><td>Expand depth</td><td>0</td><td>0.0%</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>
+Three archetypes carry 85% of the queue, so a review cycle is three jobs rather than eight:
+question the targeting on long pages that rank deep, rewrite listings on page-one pages losing
+clicks, and diagnose the remainder by hand. The 285 rows in <code>no_clear_defect</code> are the
+honest ceiling on how much of a cycle can be planned in advance. An archetype is a triage aid and
+not evidence: no refresh outcome exists in this data, so nothing here measures whether the
+suggested action works. It selects the question a reviewer should ask.
+</p>
+
+<div class="note">
+<b>The ranking optimises risk, not actionability.</b> The model buries the two archetypes it cannot
+help with, and it was told to do neither: pages whose record is too incomplete to diagnose fall to
+0.02 times their corpus share, and pages with no demand to 0.52. But <code>stale_authority</code>
+and <code>weak_engagement</code> are pushed down too, to 0.15, and both carry cheap and specific
+actions. They decline at 0.531 and 0.512 against a 0.611 eligible base rate, so the forest is
+correctly reading them as lower risk. Risk and actionability are different quantities and this
+artefact ranks only the first. A cycle worked strictly top down never reaches the easiest wins in
+the corpus.
+</div>
+
+<h3>Read the queue within an age band</h3>
+
+<p>
+Content age moves against the usual expectation. The declining label fires on <strong>0.673</strong>
+of pages aged 90 to 120 days and <strong>0.439</strong> of pages past 470 days, and the pattern
+holds inside every impression quartile, so it is not an artefact of younger pages being smaller.
+It is still not a finding about content, because three mechanisms predict the same curve and this
+data separates none of them. Young pages put 0.342 of their 90-day impressions in the prior window
+against 0.191 in the recent one, which is the shape of a page settling after launch rather than one
+losing ground. The corpus is survivors only, so the old bands contain what stabilised. And median
+word count is zero past 365 days, so the model may rank old content lower partly because it can see
+less of it.
+</p>
+
+<p>
+No refresh cadence is recommended, because none is measurable here.
+<code>days_since_last_update</code> takes 56 distinct values across 26,612 pages and two of them
+cover 68%. It is close to a two-valued flag, and the bands where it does vary hold roughly a
+hundred pages each. A cadence quoted from this data would be an invented number.
+</p>
+
+<div class="stats">
+<div class="stat"><div class="v">81%</div><div class="l">of the delivered queue is content under 180 days old</div></div>
+<div class="stat"><div class="v">0%</div><div class="l">of the queue is older than a year, drawn from 23% of the corpus</div></div>
+</div>
+
+<p>
+The recommendation that survives is about how the artefact is used rather than how it is built.
+Ranked across the whole corpus, this is a young-content tool presented as a portfolio-wide one, and
+a reviewer working it top down will not see a single page older than a year. A cycle meant to cover
+the portfolio has to rank within age band.
+</p>
 
 <h3>Four checks before any page is edited</h3>
 
