@@ -27,6 +27,9 @@ outputs/*.csv
 # your experiments live in work/; datasets never enter git
 work/**/*.csv
 
+# cached out-of-fold score arrays written by work notebooks
+*.pkl
+
 # --- Python / notebooks ----------------------------------------------------
 __pycache__/
 *.py[cod]

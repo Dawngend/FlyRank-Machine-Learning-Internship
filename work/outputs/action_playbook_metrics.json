@@ -43,6 +43,307 @@
       "wasted_reviews": 222
     }
   },
+  "archetypes": {
+    "purpose": "the queue says which page next; the archetype says what kind of edit to consider. Triage only -- no refresh outcome exists in this data, so no archetype carries evidence that its action recovers traffic",
+    "assignment": "mutually exclusive, exhaustive, first match wins down the order below",
+    "order": [
+      "snippet_gap",
+      "thin_with_demand",
+      "stale_authority",
+      "deep_but_substantial",
+      "weak_engagement",
+      "low_demand",
+      "insufficient_page_data",
+      "no_clear_defect"
+    ],
+    "order_matters_for_pages": 8713,
+    "tie_break_principle": "cheapest and most reversible edit first, so a page that is both a snippet problem and a consolidation candidate is offered the title rewrite",
+    "eligible_pages": 26612,
+    "eligible_base_rate": 0.6111,
+    "buckets": {
+      "snippet_gap": {
+        "action": "rewrite_title_and_meta",
+        "rationale": "ranks on page one and is seen, but clicked less than its position peers: the listing is the likeliest defect, not the body",
+        "eligible_pages": 3647,
+        "eligible_share": 0.137,
+        "queue_pages": 254,
+        "queue_share": 0.254,
+        "declining_rate": 0.6726,
+        "median_impressions_90d": 3904.0,
+        "median_avg_position": 6.5,
+        "median_word_count": 2344.0
+      },
+      "thin_with_demand": {
+        "action": "expand_depth",
+        "rationale": "measured thin against measured demand: add substance before anything else",
+        "eligible_pages": 75,
+        "eligible_share": 0.0028,
+        "queue_pages": 0,
+        "queue_share": 0.0,
+        "declining_rate": 0.5333,
+        "median_impressions_90d": 657.0,
+        "median_avg_position": 13.1,
+        "median_word_count": 1108.0
+      },
+      "stale_authority": {
+        "action": "refresh_facts_and_dates",
+        "rationale": "a strong, visible page that has not been touched in 90+ days: defend it",
+        "eligible_pages": 1256,
+        "eligible_share": 0.0472,
+        "queue_pages": 7,
+        "queue_share": 0.007,
+        "declining_rate": 0.5311,
+        "median_impressions_90d": 5108.0,
+        "median_avg_position": 5.6,
+        "median_word_count": 0.0
+      },
+      "deep_but_substantial": {
+        "action": "reassess_intent_or_consolidate",
+        "rationale": "length is not the problem and it ranks deep anyway: question the target query, or merge it into a stronger page",
+        "eligible_pages": 5424,
+        "eligible_share": 0.2038,
+        "queue_pages": 315,
+        "queue_share": 0.315,
+        "declining_rate": 0.6792,
+        "median_impressions_90d": 1217.5,
+        "median_avg_position": 29.1,
+        "median_word_count": 3132.0
+      },
+      "weak_engagement": {
+        "action": "review_intro_and_layout",
+        "rationale": "people arrive and do not engage: the defect is on the page, above the fold",
+        "eligible_pages": 3117,
+        "eligible_share": 0.1171,
+        "queue_pages": 18,
+        "queue_share": 0.018,
+        "declining_rate": 0.5117,
+        "median_impressions_90d": 7142.0,
+        "median_avg_position": 10.8,
+        "median_word_count": 2947.0
+      },
+      "low_demand": {
+        "action": "no_content_edit_review_targeting",
+        "rationale": "not obviously defective, but the demand is not there. Editing is the wrong lever and this is where review effort is most often wasted",
+        "eligible_pages": 6047,
+        "eligible_share": 0.2272,
+        "queue_pages": 119,
+        "queue_share": 0.119,
+        "declining_rate": 0.6306,
+        "median_impressions_90d": 53.0,
+        "median_avg_position": 9.3,
+        "median_word_count": 2353.0
+      },
+      "insufficient_page_data": {
+        "action": "fix_the_record_first",
+        "rationale": "word count is missing, so the thin and substantial tests could not run: diagnose the data before diagnosing the page",
+        "eligible_pages": 2883,
+        "eligible_share": 0.1083,
+        "queue_pages": 2,
+        "queue_share": 0.002,
+        "declining_rate": 0.402,
+        "median_impressions_90d": 771.0,
+        "median_avg_position": 21.2,
+        "median_word_count": 0.0
+      },
+      "no_clear_defect": {
+        "action": "manual_diagnosis",
+        "rationale": "the model ranks it and none of the above explains why. A human looks, and this residual is reported rather than hidden",
+        "eligible_pages": 4163,
+        "eligible_share": 0.1564,
+        "queue_pages": 285,
+        "queue_share": 0.285,
+        "declining_rate": 0.6848,
+        "median_impressions_90d": 1154.0,
+        "median_avg_position": 11.3,
+        "median_word_count": 2809.0
+      }
+    },
+    "action_is_not_automated": "an archetype selects the review question, never the edit. Every action in this table is performed by a human under the section 3 gate"
+  },
+  "content_decay": {
+    "finding": "the declining label fires more often on younger pages, not older ones: 0.673 in the (89.0, 120.0] day band against 0.439 in the (470.0, inf] band",
+    "survives_the_visibility_confound": true,
+    "by_content_age": {
+      "(89.0, 120.0]": {
+        "n": 5033,
+        "declining_rate": 0.6728,
+        "median_trend_pct": -44.7,
+        "median_impressions_90d": 1010.0,
+        "median_prev_30d_share": 0.3416,
+        "median_last_30d_share": 0.1912,
+        "median_word_count": 2862.0
+      },
+      "(120.0, 180.0]": {
+        "n": 5858,
+        "declining_rate": 0.7361,
+        "median_trend_pct": -48.4,
+        "median_impressions_90d": 953.5,
+        "median_prev_30d_share": 0.3304,
+        "median_last_30d_share": 0.1705,
+        "median_word_count": 2900.0
+      },
+      "(180.0, 270.0]": {
+        "n": 3934,
+        "declining_rate": 0.6378,
+        "median_trend_pct": -36.05,
+        "median_impressions_90d": 1151.0,
+        "median_prev_30d_share": 0.3207,
+        "median_last_30d_share": 0.2078,
+        "median_word_count": 3233.5
+      },
+      "(270.0, 365.0]": {
+        "n": 5680,
+        "declining_rate": 0.5887,
+        "median_trend_pct": -30.05,
+        "median_impressions_90d": 1213.0,
+        "median_prev_30d_share": 0.3116,
+        "median_last_30d_share": 0.2192,
+        "median_word_count": 1464.0
+      },
+      "(365.0, 470.0]": {
+        "n": 3617,
+        "declining_rate": 0.4473,
+        "median_trend_pct": -15.0,
+        "median_impressions_90d": 948.0,
+        "median_prev_30d_share": 0.315,
+        "median_last_30d_share": 0.2723,
+        "median_word_count": 0.0
+      },
+      "(470.0, inf]": {
+        "n": 2490,
+        "declining_rate": 0.439,
+        "median_trend_pct": -14.7,
+        "median_impressions_90d": 899.5,
+        "median_prev_30d_share": 0.3051,
+        "median_last_30d_share": 0.263,
+        "median_word_count": 0.0
+      }
+    },
+    "by_days_since_last_update": {
+      "(0.0, 30.0]": {
+        "n": 17454,
+        "declining_rate": 0.6,
+        "median_trend_pct": -33.3,
+        "median_impressions_90d": 762.0,
+        "median_prev_30d_share": 0.3266,
+        "median_last_30d_share": 0.2171,
+        "median_word_count": 2691.0
+      },
+      "(30.0, 60.0]": {
+        "n": 128,
+        "declining_rate": 0.5859,
+        "median_trend_pct": -32.15,
+        "median_impressions_90d": 699.5,
+        "median_prev_30d_share": 0.1865,
+        "median_last_30d_share": 0.1254,
+        "median_word_count": 1467.5
+      },
+      "(60.0, 104.0]": {
+        "n": 8781,
+        "declining_rate": 0.6309,
+        "median_trend_pct": -34.2,
+        "median_impressions_90d": 1839.0,
+        "median_prev_30d_share": 0.3142,
+        "median_last_30d_share": 0.2094,
+        "median_word_count": 1510.0
+      },
+      "(104.0, 180.0]": {
+        "n": 116,
+        "declining_rate": 0.7931,
+        "median_trend_pct": -65.85,
+        "median_impressions_90d": 1228.5,
+        "median_prev_30d_share": 0.324,
+        "median_last_30d_share": 0.1088,
+        "median_word_count": 2703.0
+      },
+      "(180.0, inf]": {
+        "n": 133,
+        "declining_rate": 0.6165,
+        "median_trend_pct": -44.5,
+        "median_impressions_90d": 26.0,
+        "median_prev_30d_share": 0.3636,
+        "median_last_30d_share": 0.2158,
+        "median_word_count": 1635.0
+      }
+    },
+    "declining_rate_by_age_within_impression_quartile": {
+      "q1": {
+        "(89.0, 120.0]": 0.7278,
+        "(120.0, 180.0]": 0.7169,
+        "(180.0, 270.0]": 0.6805,
+        "(270.0, 365.0]": 0.5782,
+        "(365.0, 470.0]": 0.4867,
+        "(470.0, inf]": 0.5054
+      },
+      "q2": {
+        "(89.0, 120.0]": 0.7116,
+        "(120.0, 180.0]": 0.7857,
+        "(180.0, 270.0]": 0.6738,
+        "(270.0, 365.0]": 0.5842,
+        "(365.0, 470.0]": 0.4014,
+        "(470.0, inf]": 0.3818
+      },
+      "q3": {
+        "(89.0, 120.0]": 0.6803,
+        "(120.0, 180.0]": 0.7566,
+        "(180.0, 270.0]": 0.6916,
+        "(270.0, 365.0]": 0.6383,
+        "(365.0, 470.0]": 0.4951,
+        "(470.0, inf]": 0.4758
+      },
+      "q4": {
+        "(89.0, 120.0]": 0.5637,
+        "(120.0, 180.0]": 0.6869,
+        "(180.0, 270.0]": 0.5361,
+        "(270.0, 365.0]": 0.5584,
+        "(365.0, 470.0]": 0.4141,
+        "(470.0, inf]": 0.4038
+      }
+    },
+    "queue_age_skew": {
+      "(89.0, 120.0]": {
+        "corpus_share": 0.1891,
+        "queue_share": 0.253,
+        "over_representation": 1.34
+      },
+      "(120.0, 180.0]": {
+        "corpus_share": 0.2201,
+        "queue_share": 0.558,
+        "over_representation": 2.53
+      },
+      "(180.0, 270.0]": {
+        "corpus_share": 0.1478,
+        "queue_share": 0.12,
+        "over_representation": 0.81
+      },
+      "(270.0, 365.0]": {
+        "corpus_share": 0.2134,
+        "queue_share": 0.069,
+        "over_representation": 0.32
+      },
+      "(365.0, 470.0]": {
+        "corpus_share": 0.1359,
+        "queue_share": 0.0,
+        "over_representation": 0.0
+      },
+      "(470.0, inf]": {
+        "corpus_share": 0.0936,
+        "queue_share": 0.0,
+        "over_representation": 0.0
+      }
+    },
+    "refresh_recency_is_nearly_two_valued": {
+      "distinct_values": 56,
+      "top_two_values_share": 0.6832,
+      "why_it_matters": "refresh recency cannot be read as a continuous signal here, so this data cannot support a refresh *cadence* recommendation and none is made"
+    },
+    "interpretation": {
+      "mechanism_1_post_launch_settling": "the prior 30-day window of a young page catches more of its launch ramp. Median prev-30d share falls from 0.342 to 0.305 across the age range while the last-30d share rises. A page settling off a launch spike registers as declining under a label that only compares two adjacent windows",
+      "mechanism_2_survivorship": "ML-09 established the corpus is 100% active content. Pages that launched and died are already gone, so the old bands contain only what stabilised. Some of the attenuation with age is selection and this data cannot separate the two",
+      "what_this_does_not_license": "no claim that content stops decaying with age, and no refresh cadence. Both mechanisms predict the same curve and neither is testable without dated history and refresh outcomes",
+      "what_it_does_license": "read the queue within an age band. Ranked across the whole corpus, the youngest band supplies more of the queue than its share of the corpus, and some of those rows are settling rather than declining"
+    }
+  },
   "explainability": {
     "finding": "the ML-07 rule explains only about half of what the forest ranks: the rule fires on thinness, staleness and weak CTR, while the forest ranks on sustained visibility and age, which the rule has no code for",
     "coverage_by_depth": {

@@ -64,6 +64,7 @@ CONFIDENCE_BANDS = ("high", "medium", "low")
 # Columns a reviewer needs to act, and nothing else. No label, no trend field.
 QUEUE_COLUMNS = [
     "queue_rank", "content_id", "client_id", "model_score", "confidence",
+    "page_archetype", "archetype_action",
     "suggested_action", "explanation_source", "reason_codes", "model_reason_codes",
     "reason_count", "baseline_action_score",
     "impressions_90d", "clicks_90d", "sessions_90d", "avg_position", "ctr",
@@ -99,6 +100,314 @@ MODEL_REASONS = [
 
 # What to do with a row the rule had nothing to say about.
 MODEL_ONLY_ACTION = "review_visibility_trend"
+
+# --- page archetypes ---------------------------------------------------------
+# The queue answers "which page next". It does not answer "and then what",
+# because every delivered row currently carries the same instruction: look at
+# this page. The archetype layer is the "and then what": one mutually exclusive
+# bucket per page, chosen from observable page condition, each implying a
+# different kind of edit. It is a triage aid, not evidence -- no refresh outcome
+# exists anywhere in this data, so an archetype says what to *consider*, never
+# what will work.
+#
+# Three things to know before reading the mapping:
+#
+#   * Assignment is first-match-wins down ARCHETYPE_ORDER, and 8,713 of the
+#     26,612 eligible pages satisfy more than one definition, so the order is
+#     load-bearing rather than cosmetic. It runs cheapest-and-most-specific
+#     first: a title rewrite is a smaller and more reversible act than a
+#     consolidation, so where both apply the cheaper diagnosis is offered.
+#   * The two buckets that need word_count sit *after* every bucket that does
+#     not, so a page with a missing word count is still diagnosed on the
+#     evidence that does exist, and only falls to insufficient_page_data when
+#     nothing word-count-free explained it.
+#   * No archetype reads a label field. They are built on the same feature view
+#     the ML-07 rule gets, and the exclusion is asserted in run().
+#
+# CTR is compared against the page's *position peers* rather than a flat cut.
+# Raw CTR falls with position, so a flat threshold would call every deep page a
+# click problem. The peer baseline is the median CTR within the page's position
+# band, computed only over pages visible enough for CTR to mean anything -- at
+# the corpus level the top band's median CTR is 0.00, but that is because those
+# rows have almost no impressions, not because page-one pages go unclicked.
+VISIBILITY_FLOOR = 500       # impressions_90d below which CTR is too noisy to peer-compare
+DEMAND_FLOOR = 250           # impressions_90d below which a content edit is not the lever
+POSITION_BANDS = [0, 3, 5, 10, 20, 50, np.inf]
+THIN_WORD_COUNT = 1200       # matches the ML-07 rule's thinness cut
+STALE_DAYS = 90
+DEEP_POSITION = 20
+
+# archetype -> (action, why a reviewer is being pointed at that action)
+ARCHETYPE_ACTIONS = {
+    "snippet_gap": (
+        "rewrite_title_and_meta",
+        "ranks on page one and is seen, but clicked less than its position peers: "
+        "the listing is the likeliest defect, not the body",
+    ),
+    "thin_with_demand": (
+        "expand_depth",
+        "measured thin against measured demand: add substance before anything else",
+    ),
+    "stale_authority": (
+        "refresh_facts_and_dates",
+        "a strong, visible page that has not been touched in 90+ days: defend it",
+    ),
+    "deep_but_substantial": (
+        "reassess_intent_or_consolidate",
+        "length is not the problem and it ranks deep anyway: question the target "
+        "query, or merge it into a stronger page",
+    ),
+    "weak_engagement": (
+        "review_intro_and_layout",
+        "people arrive and do not engage: the defect is on the page, above the fold",
+    ),
+    "low_demand": (
+        "no_content_edit_review_targeting",
+        "not obviously defective, but the demand is not there. Editing is the wrong "
+        "lever and this is where review effort is most often wasted",
+    ),
+    "insufficient_page_data": (
+        "fix_the_record_first",
+        "word count is missing, so the thin and substantial tests could not run: "
+        "diagnose the data before diagnosing the page",
+    ),
+    "no_clear_defect": (
+        "manual_diagnosis",
+        "the model ranks it and none of the above explains why. A human looks, and "
+        "this residual is reported rather than hidden",
+    ),
+}
+
+
+def assign_archetypes(frame: pd.DataFrame) -> pd.DataFrame:
+    """One mutually exclusive archetype per page, first match wins.
+
+    Exhaustive by construction: no_clear_defect is the default, so every page
+    gets exactly one bucket and the shares always sum to 1.
+    """
+    band = pd.cut(frame["avg_position"], POSITION_BANDS)
+    visible = frame["impressions_90d"] >= VISIBILITY_FLOOR
+    peer_ctr = frame.loc[visible].groupby(band[visible], observed=True)["ctr"].median()
+    peer = band.map(peer_ctr).astype(float)
+
+    word_count = frame["word_count"]
+    on_page_one = (frame["avg_position"] > 0) & (frame["avg_position"] <= 10)
+    engaged = (frame["engagement_rate"] > 0) & (frame["engagement_rate"] < 30)
+    scrolled = (frame["scroll_rate"] > 0) & (frame["scroll_rate"] < 30)
+
+    ordered = [
+        ("snippet_gap", visible & on_page_one & (frame["ctr"] < peer)),
+        ("thin_with_demand",
+         (word_count > 0) & (word_count < THIN_WORD_COUNT)
+         & (frame["impressions_90d"] >= DEMAND_FLOOR)),
+        ("stale_authority",
+         visible & on_page_one & (frame["days_since_last_update"] >= STALE_DAYS)),
+        ("deep_but_substantial",
+         (frame["avg_position"] > DEEP_POSITION) & (word_count >= THIN_WORD_COUNT)),
+        ("weak_engagement", (frame["sessions_90d"] >= 30) & (engaged | scrolled)),
+        ("low_demand", frame["impressions_90d"] < DEMAND_FLOOR),
+        ("insufficient_page_data", word_count == 0),
+    ]
+
+    archetype = pd.Series("no_clear_defect", index=frame.index)
+    claimed = pd.Series(False, index=frame.index)
+    definitions_matched = pd.Series(0, index=frame.index)
+    for name, condition in ordered:
+        condition = condition.fillna(False)
+        definitions_matched += condition.astype(int)
+        archetype[condition & ~claimed] = name
+        claimed |= condition
+
+    return pd.DataFrame(
+        {
+            "page_archetype": archetype,
+            "archetype_action": archetype.map(lambda a: ARCHETYPE_ACTIONS[a][0]),
+            "archetype_definitions_matched": definitions_matched,
+        },
+        index=frame.index,
+    )
+
+
+def archetype_summary(eligible: pd.DataFrame, delivered: pd.DataFrame) -> dict:
+    """Sizes, actions, and the honest caveats, for every archetype."""
+    corpus_mix = eligible["page_archetype"].value_counts()
+    queue_mix = delivered["page_archetype"].value_counts()
+
+    buckets = {}
+    for name, (action, rationale) in ARCHETYPE_ACTIONS.items():
+        block = eligible[eligible["page_archetype"] == name]
+        in_queue = delivered[delivered["page_archetype"] == name]
+        buckets[name] = {
+            "action": action,
+            "rationale": rationale,
+            "eligible_pages": int(corpus_mix.get(name, 0)),
+            "eligible_share": round(float(corpus_mix.get(name, 0) / len(eligible)), 4),
+            "queue_pages": int(queue_mix.get(name, 0)),
+            "queue_share": round(float(queue_mix.get(name, 0) / len(delivered)), 4),
+            # Observational only: the rate at which this bucket carries the
+            # declining label. NOT the rate at which the action works.
+            "declining_rate": round(float(block["is_declining_label"].mean()), 4)
+            if len(block) else None,
+            "median_impressions_90d": round(float(block["impressions_90d"].median()), 1)
+            if len(block) else None,
+            "median_avg_position": round(float(block["avg_position"].median()), 2)
+            if len(block) else None,
+            "median_word_count": round(float(block["word_count"].median()), 1)
+            if len(block) else None,
+        }
+
+    return {
+        "purpose": (
+            "the queue says which page next; the archetype says what kind of edit to "
+            "consider. Triage only -- no refresh outcome exists in this data, so no "
+            "archetype carries evidence that its action recovers traffic"
+        ),
+        "assignment": "mutually exclusive, exhaustive, first match wins down the order below",
+        "order": list(ARCHETYPE_ACTIONS),
+        "order_matters_for_pages": int(
+            (eligible["archetype_definitions_matched"] > 1).sum()
+        ),
+        "tie_break_principle": (
+            "cheapest and most reversible edit first, so a page that is both a snippet "
+            "problem and a consolidation candidate is offered the title rewrite"
+        ),
+        "eligible_pages": int(len(eligible)),
+        "eligible_base_rate": round(float(eligible["is_declining_label"].mean()), 4),
+        "buckets": buckets,
+        "action_is_not_automated": (
+            "an archetype selects the review question, never the edit. Every action "
+            "in this table is performed by a human under the section 3 gate"
+        ),
+    }
+
+
+# --- content decay -----------------------------------------------------------
+# Age bands are wide enough that the smallest holds ~2,500 pages, because the
+# claim this section supports is directional and a directional claim on a
+# 100-page cell is not worth making.
+AGE_BANDS = [89, 120, 180, 270, 365, 470, np.inf]
+FRESHNESS_BANDS = [0, 30, 60, 104, 180, np.inf]
+
+
+def content_decay(eligible: pd.DataFrame, delivered: pd.DataFrame) -> dict:
+    """How the declining label moves with content age and with refresh recency.
+
+    The headline is counter-intuitive and it survives the obvious confound, so
+    it is reported as a finding: in this corpus *younger* pages carry the
+    declining label more often, and the pattern holds inside every impression
+    quartile. What it is not is evidence that content stops decaying as it ages
+    -- two mechanisms predict the same curve and this data separates neither.
+    """
+    age_band = pd.cut(eligible["content_age_days"], AGE_BANDS)
+    fresh_band = pd.cut(eligible["days_since_last_update"], FRESHNESS_BANDS)
+    quartile = pd.qcut(eligible["impressions_90d"], 4, labels=["q1", "q2", "q3", "q4"])
+
+    def profile(grouper) -> dict:
+        return {
+            str(key): {
+                "n": int(len(block)),
+                "declining_rate": round(float(block["is_declining_label"].mean()), 4),
+                "median_trend_pct": round(float(block["trend_pct"].median()), 2),
+                "median_impressions_90d": round(float(block["impressions_90d"].median()), 1),
+                # Share of the 90-day impression total landing in each 30-day
+                # window. An even split is 0.333. A page whose prior window runs
+                # hot and recent window runs cold is settling, which is not the
+                # same thing as dying.
+                "median_prev_30d_share": round(
+                    float((block["impressions_prev_30d"] / block["impressions_90d"]).median()), 4
+                ),
+                "median_last_30d_share": round(
+                    float((block["impressions_last_30d"] / block["impressions_90d"]).median()), 4
+                ),
+                "median_word_count": round(float(block["word_count"].median()), 1),
+            }
+            for key, block in eligible.groupby(grouper, observed=True)
+        }
+
+    within_quartile = {}
+    for name, block in eligible.groupby(quartile, observed=True):
+        bands = pd.cut(block["content_age_days"], AGE_BANDS)
+        within_quartile[str(name)] = {
+            str(key): round(float(sub["is_declining_label"].mean()), 4)
+            for key, sub in block.groupby(bands, observed=True)
+        }
+
+    by_age = profile(age_band)
+    youngest, oldest = list(by_age)[0], list(by_age)[-1]
+    holds_in_every_quartile = all(
+        list(row.values())[0] > list(row.values())[-1] for row in within_quartile.values()
+    )
+
+    corpus_mix = age_band.value_counts(normalize=True)
+    queue_mix = pd.cut(delivered["content_age_days"], AGE_BANDS).value_counts(normalize=True)
+    skew = {
+        str(band): {
+            "corpus_share": round(float(corpus_mix.get(band, 0.0)), 4),
+            "queue_share": round(float(queue_mix.get(band, 0.0)), 4),
+            "over_representation": round(
+                float(queue_mix.get(band, 0.0) / corpus_mix.get(band, 1.0)), 2
+            ),
+        }
+        for band in sorted(corpus_mix.index)
+    }
+
+    return {
+        "finding": (
+            "the declining label fires more often on younger pages, not older ones: "
+            f"{by_age[youngest]['declining_rate']:.3f} in the {youngest} day band against "
+            f"{by_age[oldest]['declining_rate']:.3f} in the {oldest} band"
+        ),
+        "survives_the_visibility_confound": bool(holds_in_every_quartile),
+        "by_content_age": by_age,
+        "by_days_since_last_update": profile(fresh_band),
+        "declining_rate_by_age_within_impression_quartile": within_quartile,
+        "queue_age_skew": skew,
+        "refresh_recency_is_nearly_two_valued": {
+            "distinct_values": int(eligible["days_since_last_update"].nunique()),
+            "top_two_values_share": round(
+                float(
+                    eligible["days_since_last_update"]
+                    .value_counts(normalize=True).head(2).sum()
+                ), 4
+            ),
+            "why_it_matters": (
+                "refresh recency cannot be read as a continuous signal here, so this data "
+                "cannot support a refresh *cadence* recommendation and none is made"
+            ),
+        },
+        "interpretation": {
+            "mechanism_1_post_launch_settling": (
+                "the prior 30-day window of a young page catches more of its launch ramp. "
+                "Median prev-30d share falls from "
+                f"{by_age[youngest]['median_prev_30d_share']:.3f} to "
+                f"{by_age[oldest]['median_prev_30d_share']:.3f} across the age range while the "
+                "last-30d share rises. A page settling off a launch spike registers as "
+                "declining under a label that only compares two adjacent windows"
+            ),
+            "mechanism_2_survivorship": (
+                "ML-09 established the corpus is 100% active content. Pages that launched and "
+                "died are already gone, so the old bands contain only what stabilised. Some of "
+                "the attenuation with age is selection and this data cannot separate the two"
+            ),
+            "mechanism_3_feature_degradation": (
+                "median word count is 0 in both bands past 365 days -- word count is simply "
+                "missing on most old pages. The model may rank old content lower partly "
+                "because it can see less about it, which is a data-quality gradient rather "
+                "than a content finding, and it is the one mechanism of the three that is "
+                "fixable upstream"
+            ),
+            "what_this_does_not_license": (
+                "no claim that content stops decaying with age, and no refresh cadence. Both "
+                "mechanisms predict the same curve and neither is testable without dated "
+                "history and refresh outcomes"
+            ),
+            "what_it_does_license": (
+                "read the queue within an age band. Ranked across the whole corpus, the "
+                "youngest band supplies more of the queue than its share of the corpus, and "
+                "some of those rows are settling rather than declining"
+            ),
+        },
+    }
 
 
 def out_of_fold_scores(X: pd.DataFrame, y: np.ndarray, groups: np.ndarray) -> np.ndarray:
@@ -150,6 +459,14 @@ def run() -> dict:
     frame["reason_count"] = rule["reason_count"].to_numpy()
     frame["suggested_action"] = rule["suggested_action"].to_numpy()
     frame["baseline_action_score"] = rule["action_score"].to_numpy()
+
+    # Page archetypes, on the same label-free feature view the rule gets. Asserted
+    # rather than trusted: if a label field ever reaches this call it should fail
+    # here, not quietly produce a better-looking table.
+    assert not [c for c in LABEL_FIELDS if c in features_only.columns], \
+        "archetypes must be assigned on a label-free view"
+    frame[["page_archetype", "archetype_action", "archetype_definitions_matched"]] = \
+        assign_archetypes(features_only)
 
     # --- structural hold-out: pages with no prior window ----------------------
     no_prior_window = frame["impressions_prev_30d"] == 0
@@ -239,6 +556,8 @@ def run() -> dict:
             "eligible_for_queue": int(len(eligible)),
         },
         "queue_quality": queue_quality(y_ranked, base_rate),
+        "archetypes": archetype_summary(ranked, delivered),
+        "content_decay": content_decay(ranked, delivered),
         "explainability": {
             "finding": (
                 "the ML-07 rule explains only about half of what the forest ranks: the "
