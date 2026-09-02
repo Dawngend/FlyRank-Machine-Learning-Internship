@@ -1,1 +1,1 @@
-https://docs-ebon-psi.vercel.app
+https://flyrank-ml-capstone.vercel.app
